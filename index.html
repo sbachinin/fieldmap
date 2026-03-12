@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FieldMap</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📍</text></svg>">
+    <!-- MapLibre GL JS Styles -->
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.css">
+    <!-- Application Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Fullscreen Map Container -->
+    <div id="map"></div>
+
+    <!-- Global Warning Overlay (e.g., Geolocation Failed) -->
+    <div id="global_overlay"></div>
+
+    <!-- Credentials Trigger Button -->
+    <button id="keys_btn" popovertarget="credentials_popover" class="floating-btn">🔑</button>
+
+    <!-- Credentials Popover -->
+    <div id="credentials_popover" popover>
+        <h2>Settings & Credentials</h2>
+        <div class="input-group">
+            <label for="github_token">GitHub Personal Access Token</label>
+            <input type="text" id="github_token">
+        </div>
+        <div class="input-group">
+            <label for="maptiler_key">MapTiler API Key</label>
+            <input type="text" id="maptiler_key">
+        </div>
+        <button id="save_credentials_btn">Save</button>
+    </div>
+
+    <!-- Context Menu Container -->
+    <div id="context_menu" class="hidden">
+        <ul id="context_menu_options"></ul>
+    </div>
+
+    <!-- Hidden Image Acquisition Input -->
+    <!-- Accept image types, allowing user to capture photo or pick from gallery on mobile -->
+    <input type="file" id="camera_input" accept="image/*" style="display: none;">
+
+    <!-- MapLibre JS Library -->
+    <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>
+    
+    <!-- Application Entry Point -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

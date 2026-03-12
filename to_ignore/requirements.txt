@@ -6,7 +6,82 @@ This map may later grow into a more general field mapping utility rather than re
 
 When the application loads, it first attempts to obtain the device’s geographic location using the browser geolocation capabilities provided by the Geolocation API. If the request succeeds, the application initializes the map centered on those coordinates with a zoom level of approximately 18 so that individual buildings are clearly visible. If the request fails or times out, the application does not initialize the map and instead displays a simple message indicating that location information is unavailable. Because the tool is intended for field use, the presence of a working location signal is considered a requirement for normal operation.
 
-The map itself is rendered using MapLibre GL JS. The base visual layer of the map consists of satellite imagery so that the user can clearly recognize buildings and other physical structures from above. Over this imagery, a minimal overlay derived from OpenStreetMap data displays key cartographic features. These include roads, building outlines, major water bodies, and streams. The purpose of this overlay is to provide spatial orientation while keeping the map visually simple enough that the satellite imagery remains the primary visual reference.
+The application will use Map rendering based on MapLibre GL JS with map data provided by MapTiler services. The map style will combine satellite raster imagery with vector tiles derived from OpenStreetMap data. Only the necessary vector layers will be rendered in the map style, specifically roads and building footprints, while other layers (e.g., water bodies or land use) will be omitted from the style configuration.
+
+To improve building visibility on top of satellite imagery, building polygons will be rendered with a dual-outline technique. This consists of a wider semi-transparent light halo and a thin darker outline drawn above it. This approach creates contrast against complex satellite textures and makes building footprints clearly visible for accurate marker placement.
+
+Approximate style.json:
+{
+  "version": 8,
+  "sources": {
+    "satellite": {
+      "type": "raster",
+      "tiles": [
+        "https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=YOUR_MAPTILER_KEY"
+      ],
+      "tileSize": 256
+    },
+    "osm": {
+      "type": "vector",
+      "tiles": [
+        "https://api.maptiler.com/tiles/v3/{z}/{x}/{y}.pbf?key=YOUR_MAPTILER_KEY"
+      ]
+    }
+  },
+  "layers": [
+    {
+      "id": "satellite",
+      "type": "raster",
+      "source": "satellite"
+    },
+
+    {
+      "id": "building-fill",
+      "type": "fill",
+      "source": "osm",
+      "source-layer": "building",
+      "paint": {
+        "fill-color": "#ffffff",
+        "fill-opacity": 0.08
+      }
+    },
+
+    {
+      "id": "building-halo",
+      "type": "line",
+      "source": "osm",
+      "source-layer": "building",
+      "paint": {
+        "line-color": "#ffffff",
+        "line-width": 3,
+        "line-opacity": 0.6
+      }
+    },
+
+    {
+      "id": "building-outline",
+      "type": "line",
+      "source": "osm",
+      "source-layer": "building",
+      "paint": {
+        "line-color": "#333333",
+        "line-width": 1
+      }
+    },
+
+    {
+      "id": "roads",
+      "type": "line",
+      "source": "osm",
+      "source-layer": "transportation",
+      "paint": {
+        "line-color": "#ffffff",
+        "line-width": 1.5,
+        "line-opacity": 0.8
+      }
+    }
+  ]
+}
 
 The map includes the built-in geolocation control provided by MapLibre. This control displays the user’s current position as a moving dot and includes a standard “locate me” button that can recenter the map on the user’s location if they have moved away from the initial view. The application does not force the map to follow the user continuously, but the location marker updates as new GPS data arrives so that the user can see their movement relative to nearby buildings.
 
@@ -22,7 +97,13 @@ During the image processing stage, the geographic coordinates from the map tap a
 
 The processed image file is uploaded to the repository using the GitHub REST API provided by GitHub. Each upload is implemented as a commit that adds a new file to the repository.
 
-Authentication for the GitHub API is handled through a personal access token supplied by the user. The application provides a small interface element, represented by a key icon, that opens a popover dialog when clicked. This dialog contains an input field where the user can paste their GitHub token and a save button to store it. When saved, the token is written to the browser’s local storage so that it persists across sessions. Whenever the application performs an upload, the GitHub API module retrieves the stored token and includes it in the authorization header of the request. If the token is missing or invalid, the upload fails and the user receives a generic notification that the operation did not succeed.
+## credentials 
+
+The application requires two user-provided API credentials: a GitHub Personal Access Token (used for repository access) and a MapTiler API key (used for map tiles and satellite imagery). These credentials must not be hard-coded in the application. Instead, they will be stored locally in the browser using localStorage.
+When the application loads, it must check whether both credentials are already present in localStorage. If one or both credentials are missing, the application will automatically display a Credentials popover dialog prompting the user to enter the required keys.
+If both credentials are already stored, the application will proceed normally without showing the dialog.
+A persistent “Keys” button will remain available in the interface, allowing the user to reopen the credentials popover at any time to review or update the stored keys.
+Any time the popover is opened, localstorage must be queried for the existing keys, and if they (any of them) are found, these value should be shown in the inputs.
 
 After the upload request completes successfully, the application immediately adds a marker to the map at the recorded coordinates.
 
