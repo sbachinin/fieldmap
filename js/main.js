@@ -14,15 +14,12 @@ import { show_context_menu, hide_context_menu, is_context_menu_visible } from '.
 import * as storage_api from './storage_api.js';
 import * as map_module from './map.js';
 import * as events from './events.js';
-import { init as init_message_overlay, show_loading, show_success, show_error } from './message_overlay.js';
+import { show_loading, show_success, show_error } from './message_overlay.js';
 
 // Application State
 let current_active_coordinates = null;
 
 async function bootstrap() {
-    // Initialize message overlay system
-    init_message_overlay();
-    
     // 1. Ensure credentials are available (resolves immediately or waits for user input)
     const creds = await init_credentials();
 

@@ -201,6 +201,37 @@ body, html {
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
+/* Close button for overlay */
+#global_overlay .close-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    display: none; /* Hidden by default, only shown for errors */
+}
+
+#global_overlay .close-btn:hover {
+    opacity: 1;
+}
+
+#global_overlay.error .close-btn {
+    display: flex; /* Show close button when overlay has error class */
+}
+
 #global_overlay.visible {
     display: block;
 }

@@ -5,6 +5,7 @@
  * Drawing to canvas inherently strips EXIF metadata per the project specs.
  */
 
+import { show_loading, show_error } from './message_overlay.js';
 import * as events from './events.js';
 
 const MAX_WIDTH = 1200; // Resize target max width
@@ -14,19 +15,10 @@ export function init_image_processing() {
     events.on('image_selected', async (payload) => {
         try {
             // Show processing overlay
-            const overlay = document.getElementById('global_overlay');
-            if (overlay) {
-                overlay.textContent = "Processing image...";
-                overlay.classList.add('visible');
-                overlay.style.backgroundColor = 'rgba(59, 130, 246, 0.9)';
-            }
+            show_loading("Processing image...");
 
             const processedBlob = await process_image(payload.file);
             
-            if (overlay) {
-                overlay.classList.remove('visible');
-            }
-
             events.emit('image_processed', {
                 blob: processedBlob,
                 lat: payload.lat,
@@ -34,12 +26,7 @@ export function init_image_processing() {
             });
         } catch (error) {
             console.error("Image processing failed", error);
-            const overlay = document.getElementById('global_overlay');
-            if (overlay) {
-                overlay.textContent = "Failed to process image.";
-                overlay.style.backgroundColor = 'rgba(239, 68, 68, 0.9)';
-                setTimeout(() => overlay.classList.remove('visible'), 3000);
-            }
+            show_error("Image processing failed. Please try again.");
         }
     });
 }

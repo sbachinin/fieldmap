@@ -16,14 +16,13 @@ const MESSAGE_OVERLAY_CONFIG = {
     AUTO_HIDE_DELAY: 3000
 };
 
-let message_overlay_element = null;
+const message_overlay_element = document.getElementById('global_overlay');
+const closeBtn = document.getElementById('overlay_close_btn');
+const messageTextElement = message_overlay_element.querySelector('.message-text');
+closeBtn.addEventListener('click', hide_message_overlay);
 
-/**
- * Initialize the message overlay system
- */
-function init() {
-    message_overlay_element = document.getElementById('global_overlay');
-}
+// Track the current timeout for auto-hiding messages
+let current_timeout = null;
 
 /**
  * Show the message overlay with a message and optional styling
@@ -32,18 +31,21 @@ function init() {
  * @param {boolean} autoHide - Whether to auto-hide after delay (default: true)
  */
 function show_message_overlay(message, color = MESSAGE_OVERLAY_CONFIG.COLORS.WARNING, auto_hide = true) {
-    if (!message_overlay_element) {
-        console.warn('Message overlay not initialized. Call init() first.');
-        return;
-    }
-
-    message_overlay_element.textContent = message;
+    messageTextElement.textContent = message;
+    
     message_overlay_element.style.backgroundColor = color;
     message_overlay_element.classList.add('visible');
 
+    // Clear any existing timeout before setting a new one
+    if (current_timeout) {
+        clearTimeout(current_timeout);
+        current_timeout = null;
+    }
+
     if (auto_hide) {
-        setTimeout(() => {
+        current_timeout = setTimeout(() => {
             hide_message_overlay();
+            current_timeout = null;
         }, MESSAGE_OVERLAY_CONFIG.AUTO_HIDE_DELAY);
     }
 }
@@ -55,6 +57,7 @@ function hide_message_overlay() {
     if (!message_overlay_element) return;
     
     message_overlay_element.classList.remove('visible');
+    message_overlay_element.classList.remove('error'); // Remove error class
     // Reset color to default warning color
     message_overlay_element.style.backgroundColor = MESSAGE_OVERLAY_CONFIG.COLORS.WARNING;
 }
@@ -72,15 +75,16 @@ function show_loading(message = 'Loading...') {
  * @param {string} message - The success message
  */
 function show_success(message = 'Success!') {
-    show_message_overlay(message, MESSAGE_OVERLAY_CONFIG.COLORS.SUCCESS);
+    show_message_overlay(message, MESSAGE_OVERLAY_CONFIG.COLORS.SUCCESS, true);
 }
 
 /**
- * Show an error message
+ * Show an error message with close button (no auto-hide)
  * @param {string} message - The error message
  */
 function show_error(message = 'An error occurred') {
-    show_message_overlay(message, MESSAGE_OVERLAY_CONFIG.COLORS.ERROR);
+    show_message_overlay(message, MESSAGE_OVERLAY_CONFIG.COLORS.ERROR, false);
+    message_overlay_element.classList.add('error');
 }
 
 /**
@@ -88,16 +92,12 @@ function show_error(message = 'An error occurred') {
  * @param {string} message - The warning message
  */
 function show_warning(message = 'Warning') {
-    show_message_overlay(message, MESSAGE_OVERLAY_CONFIG.COLORS.WARNING);
+    show_message_overlay(message, MESSAGE_OVERLAY_CONFIG.COLORS.WARNING, true);
 }
 
 export {
-    init,
-    show_message_overlay,
-    hide_message_overlay,
     show_loading,
     show_success,
     show_error,
     show_warning,
-    MESSAGE_OVERLAY_CONFIG
 };
