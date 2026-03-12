@@ -7,6 +7,7 @@
 
 import { get_current_location } from './location.js';
 import * as events from './events.js';
+import { show_warning, show_error } from './message_overlay.js';
 
 let mapInstance = null;
 
@@ -20,22 +21,30 @@ export async function create_map(maptiler_key) {
         zoom = 18;
     } catch (err) {
         console.warn("Geolocation failed:", err);
-        const overlay = document.getElementById('global_overlay');
-        if (overlay) {
-            overlay.textContent = "Location unavailable. Defaulting to global view.";
-            overlay.classList.add('visible');
-            setTimeout(() => overlay.classList.remove('visible'), 5000);
-        }
+        show_warning("Location unavailable. Defaulting to global view.");
     }
 
     // Initialize MapLibre Map
-    mapInstance = new maplibregl.Map({
-        container: 'map',
-        style: `https://api.maptiler.com/maps/satellite/style.json?key=${maptiler_key}`, // Base satellite
-        center: center,
-        zoom: zoom,
-        attributionControl: false // Completely disabled per requirements
-    });
+    try {
+        mapInstance = new maplibregl.Map({
+            container: 'map',
+            style: `https://api.maptiler.com/maps/satellite/style.json?key=${maptiler_key}`, // Base satellite
+            center: center,
+            zoom: zoom,
+            attributionControl: false // Completely disabled per requirements
+        });
+
+        // Add error handling for map style loading
+        mapInstance.on('error', (e) => {
+            if (e.error && e.error.message && e.error.message.includes('style')) {
+                show_error('Map error: ' + e.error.message);
+            }
+        });
+    } catch (err) {
+        console.error('Failed to initialize map:', err);
+        show_error('Failed to initialize map. MapTiler API key might be wrong.');
+        throw err;
+    }
 
     const geolocateControl = new maplibregl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
@@ -71,10 +80,14 @@ export async function create_map(maptiler_key) {
     return mapInstance;
 }
 
-// Reload the map style with a new MapTiler key (e.g. after credentials update).
 export function reload_map_style(maptiler_key) {
     if (!mapInstance) return;
-    mapInstance.setStyle(`https://api.maptiler.com/maps/satellite/style.json?key=${maptiler_key}`);
+    
+    try {
+        mapInstance.setStyle(`https://api.maptiler.com/maps/satellite/style.json?key=${maptiler_key}`);
+    } catch (err) {
+        show_error('Failed to reload map style. Check your MapTiler API key.');
+    }
 }
 
 export function add_marker(lat, lon) {
