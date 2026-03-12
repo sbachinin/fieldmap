@@ -14,11 +14,15 @@ import { show_context_menu, hide_context_menu, is_context_menu_visible } from '.
 import * as storage_api from './storage_api.js';
 import * as map_module from './map.js';
 import * as events from './events.js';
+import { init as init_message_overlay, show_loading, show_success, show_error } from './message_overlay.js';
 
 // Application State
 let current_active_coordinates = null;
 
 async function bootstrap() {
+    // Initialize message overlay system
+    init_message_overlay();
+    
     // 1. Ensure credentials are available (resolves immediately or waits for user input)
     const creds = await init_credentials();
 
@@ -40,7 +44,6 @@ async function bootstrap() {
     init_image_processing();
 
     // 5. Wire Event Flow Interactivity
-    const overlay = document.getElementById('global_overlay');
 
     // Tap on the map
     events.on('map_tap', (payload) => {
@@ -74,11 +77,7 @@ async function bootstrap() {
         const isReplacing = current_active_coordinates?.is_existing || false;
 
         // Show uploading indicator
-        if (overlay) {
-            overlay.textContent = isReplacing ? "Replacing photo..." : "Uploading photo...";
-            overlay.classList.add('visible');
-            overlay.style.backgroundColor = 'rgba(59, 130, 246, 0.9)'; // Blue for loading
-        }
+        show_loading(isReplacing ? "Replacing photo..." : "Uploading photo...");
 
         try {
             if (isReplacing) {
@@ -97,24 +96,11 @@ async function bootstrap() {
                 map_module.add_marker(lat, lon, false);
             }
 
-            if (overlay) {
-                overlay.textContent = "Upload successful!";
-                overlay.style.backgroundColor = 'rgba(16, 185, 129, 0.9)'; // Green for success
-            }
+            show_success("Upload successful!");
         } catch (err) {
             console.error(err);
-            if (overlay) {
-                overlay.textContent = "Upload failed. Check connection or token.";
-                overlay.style.backgroundColor = 'rgba(239, 68, 68, 0.9)'; // Red for error
-            }
+            show_error("Upload failed. Check connection or token.");
         } finally {
-            setTimeout(() => {
-                if (overlay) {
-                    overlay.classList.remove('visible');
-                    // reset color to default red (warnings)
-                    overlay.style.backgroundColor = 'rgba(239, 68, 68, 0.85)';
-                }
-            }, 3000);
             current_active_coordinates = null; // Clear state
         }
     });
