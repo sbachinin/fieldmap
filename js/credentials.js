@@ -27,48 +27,50 @@ export function populate_inputs_from_local_storage() {
     if (mtInput) mtInput.value = creds.maptiler_key;
 }
 
-export function init_credentials() {
-    return new Promise((resolve) => {
-        const popover = document.getElementById('credentials_popover');
-        const saveBtn = document.getElementById('save_credentials_btn');
+export function setup_credentials_ui() {
+    const popover = document.getElementById('credentials_popover');
+    const saveBtn = document.getElementById('save_credentials_btn');
 
-        // Populate inputs whenever the popover opens
-        popover.addEventListener('toggle', (event) => {
-            if (event.newState === 'open') {
-                populate_inputs_from_local_storage();
-            }
-        });
+    // Populate inputs once on initialization
+    populate_inputs_from_local_storage();
 
-        // Handle Enter key to save credentials
-        popover.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && popover.matches(':popover-open')) {
-                e.preventDefault(); // Prevent default form submission behavior that interferes with popover closing
-                submitCredentials();
-            }
-        });
-
-        function submitCredentials() {
-            const ghToken = document.getElementById('github_token').value.trim();
-            const mtKey = document.getElementById('maptiler_key').value.trim();
-
-            if (!ghToken || !mtKey) return;
-
-            save_credentials(ghToken, mtKey);
-            
-            // Refresh the page to apply new credentials globally
-            location.reload();
-        }
-
-        // Save button always works: persist to localStorage, close popover, notify listeners
-        saveBtn.addEventListener('click', submitCredentials);
-
-        // If credentials are already available, resolve immediately
-        const creds = get_credentials();
-        if (creds.github_token && creds.maptiler_key) {
-            resolve(creds);
-        } else {
-            // Otherwise show the popover and wait for the user to save for the first time
-            popover.showPopover();
+    // Handle Enter key to save credentials
+    popover.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && popover.matches(':popover-open')) {
+            e.preventDefault(); // Prevent default form submission behavior that interferes with popover closing
+            submit_credentials();
         }
     });
+
+    // Save button click
+    saveBtn.addEventListener('click', submit_credentials);
+}
+
+function submit_credentials() {
+    const ghToken = document.getElementById('github_token').value.trim();
+    const mtKey = document.getElementById('maptiler_key').value.trim();
+
+    if (!ghToken || !mtKey) return;
+
+    save_credentials(ghToken, mtKey);
+
+    // Refresh the page to apply new credentials globally
+    location.reload();
+}
+
+/**
+ * Ensures credentials exist before proceeding.
+ * If credentials exist, resolves immediately.
+ * Otherwise, shows the popover and returns a pending Promise.
+ */
+export function ensure_credentials() {
+    const creds = get_credentials();
+
+    if (creds.github_token && creds.maptiler_key) {
+        return Promise.resolve(creds);
+    }
+
+    // Show popover and stay pending (blocking bootstrap until reload)
+    document.getElementById('credentials_popover').showPopover();
+    return new Promise(() => { }); // Never resolves, bootstrap remains stalled
 }
