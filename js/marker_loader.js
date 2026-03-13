@@ -8,6 +8,7 @@
 import { get_credentials } from './credentials.js';
 import * as map_module from './map.js';
 import { GITHUB_CONFIG } from './constants.js';
+import { parse_coords_from_path } from './utils.js';
 
 const { OWNER, REPO } = GITHUB_CONFIG;
 
@@ -36,17 +37,9 @@ export async function load_existing_markers() {
         // We evaluate trees/folders representing the coordinates
         data.tree.forEach(item => {
             if (item.type === 'tree' && item.path.startsWith('photos/')) {
-                const folderName = item.path.replace('photos/', ''); // "52.12345_13.45678"
-                if (folderName.includes('_')) {
-                    const parts = folderName.split('_');
-                    if (parts.length === 2) {
-                        const lat = parseFloat(parts[0]);
-                        const lon = parseFloat(parts[1]);
-                        
-                        if (!isNaN(lat) && !isNaN(lon)) {
-                            map_module.add_marker(lat, lon, true);
-                        }
-                    }
+                const coords = parse_coords_from_path(item.path);
+                if (coords) {
+                    map_module.add_marker(coords.lat, coords.lon, true);
                 }
             }
         });

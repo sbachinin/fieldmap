@@ -30,3 +30,32 @@ export function generate_storage_path(lat, lon) {
     const folder = coords_to_folder_name(lat, lon);
     return `photos/${folder}/IMG_${Date.now()}.jpg`;
 }
+
+/**
+ * Extracts latitude and longitude from a path or folder name.
+ * Expected format: ".../LAT_LON/..." or just "LAT_LON"
+ * 
+ * @param {string} path - The path or folder name to parse.
+ * @returns {{lat: number, lon: number} | null} The coordinates or null if invalid.
+ */
+export function parse_coords_from_path(path) {
+    // If it's a full path, we need to extract the folder name part.
+    // The format is "photos/LAT_LON/..."
+    let folderName = path;
+    if (path.includes('photos/')) {
+        folderName = path.split('photos/')[1].split('/')[0];
+    }
+
+    if (folderName.includes('_')) {
+        const parts = folderName.split('_');
+        if (parts.length === 2) {
+            const lat = parseFloat(parts[0]);
+            const lon = parseFloat(parts[1]);
+            
+            if (!isNaN(lat) && !isNaN(lon)) {
+                return { lat, lon };
+            }
+        }
+    }
+    return null;
+}
