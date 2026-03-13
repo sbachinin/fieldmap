@@ -8,7 +8,7 @@
 import { get_credentials } from './credentials.js';
 import * as map_module from './map.js';
 import { GITHUB_CONFIG } from './constants.js';
-import { parse_coords_from_path } from './utils.js';
+import { get_unique_locations_from_tree } from './utils.js';
 
 const { OWNER, REPO } = GITHUB_CONFIG;
 
@@ -32,16 +32,10 @@ export async function load_existing_markers() {
         }
 
         const data = await res.json();
+        const locations = get_unique_locations_from_tree(data.tree);
         
-        // Structure is like "photos/52.12345_13.45678/image.jpg"
-        // We evaluate trees/folders representing the coordinates
-        data.tree.forEach(item => {
-            if (item.type === 'tree' && item.path.startsWith('photos/')) {
-                const coords = parse_coords_from_path(item.path);
-                if (coords) {
-                    map_module.add_marker(coords.lat, coords.lon, true);
-                }
-            }
+        locations.forEach(loc => {
+            map_module.add_marker(loc.lat, loc.lon, true);
         });
 
     } catch (err) {

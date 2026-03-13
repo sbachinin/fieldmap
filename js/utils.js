@@ -59,3 +59,29 @@ export function parse_coords_from_path(path) {
     }
     return null;
 }
+
+/**
+ * Filter a GitHub git tree for coordinate-bearing folders and return unique locations.
+ * 
+ * @param {Array} tree - The GitHub git tree array.
+ * @returns {Array<{lat: number, lon: number}>} Array of unique coordinate objects.
+ */
+export function get_unique_locations_from_tree(tree) {
+    const uniqueLocations = new Set();
+    const result = [];
+
+    tree.forEach(item => {
+        if (item.type === 'tree' && item.path.startsWith('photos/')) {
+            const coords = parse_coords_from_path(item.path);
+            if (coords) {
+                const coordKey = `${coords.lat}_${coords.lon}`;
+                if (!uniqueLocations.has(coordKey)) {
+                    uniqueLocations.add(coordKey);
+                    result.push(coords);
+                }
+            }
+        }
+    });
+
+    return result;
+}
