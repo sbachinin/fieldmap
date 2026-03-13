@@ -21,20 +21,22 @@
     </div>
 
     <!-- Credentials Trigger Button -->
-    <button id="keys_btn" popovertarget="credentials_popover" class="floating-btn">🔑</button>
+    <button id="keys_btn" class="floating-btn">🔑</button>
 
-    <!-- Credentials Popover -->
-    <div id="credentials_popover" popover>
-        <h2>Settings & Credentials</h2>
-        <div class="input-group">
-            <label for="github_token">GitHub Personal Access Token</label>
-            <input type="text" id="github_token">
+    <!-- Credentials Interface -->
+    <div id="credentials_form">
+        <div class="credentials-content">
+            <h2>Settings & Credentials</h2>
+            <div class="input-group">
+                <label for="github_token">GitHub Personal Access Token</label>
+                <input type="text" id="github_token">
+            </div>
+            <div class="input-group">
+                <label for="maptiler_key">MapTiler API Key</label>
+                <input type="text" id="maptiler_key">
+            </div>
+            <button id="save_credentials_btn">Save and Refresh</button>
         </div>
-        <div class="input-group">
-            <label for="maptiler_key">MapTiler API Key</label>
-            <input type="text" id="maptiler_key">
-        </div>
-        <button id="save_credentials_btn">Save and Refresh</button>
     </div>
 
     <!-- Context Menu Container -->

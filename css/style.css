@@ -19,12 +19,14 @@
     padding: 0;
 }
 
-body, html {
+body,
+html {
     width: 100%;
     height: 100%;
     font-family: 'Inter', sans-serif;
     color: var(--text-primary);
-    overflow: hidden; /* Prevent scrolling, app is fullscreen map */
+    overflow: hidden;
+    /* Prevent scrolling, app is fullscreen map */
     background-color: #f8fafc;
 }
 
@@ -40,7 +42,8 @@ body, html {
 /* Floating Keys Button */
 .floating-btn {
     position: absolute;
-    top: 50px; /* Aligned with standard MapLibre control positioning */
+    top: 50px;
+    /* Aligned with standard MapLibre control positioning */
     right: 10px;
     z-index: 10;
     background: var(--bg-surface);
@@ -55,39 +58,46 @@ body, html {
     font-size: 14px;
     cursor: pointer;
     border-radius: 4px;
-    box-shadow: none; /* Removed shadow to match MapLibre buttons better */
+    box-shadow: none;
+    /* Removed shadow to match MapLibre buttons better */
 }
 
 .floating-btn:hover {
     background: rgba(255, 255, 255, 0.95);
 }
 
-/* Popover Styling using HTML Popover API */
-[popover] {
-    border: 1px solid var(--border-color);
+/* Full-Screen Credentials UI */
+#credentials_form {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
     background: var(--bg-surface);
     backdrop-filter: blur(var(--bg-blur));
     -webkit-backdrop-filter: blur(var(--bg-blur));
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background-color: rgba(248, 250, 252, 0.98);
+}
+
+#credentials_form.visible {
+    display: flex;
+}
+
+.credentials-content {
+    background: white;
+    padding: 32px;
     border-radius: var(--radius);
-    padding: 24px;
     box-shadow: var(--shadow);
-    color: var(--text-primary);
-    min-width: 600px;
-    max-width: 90vw;
-    position: fixed;
-    top: 40px;
-    left: 50%;
-    transform: translateX(-50%);
+    border: 1px solid var(--border-color);
+    width: 100%;
+    max-width: 480px;
 }
 
-[popover]::backdrop {
-    background: rgba(15, 23, 42, 0.4);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    transition: backdrop-filter 0.3s ease;
-}
-
-[popover] h2 {
+.credentials-content h2 {
     font-size: 18px;
     font-weight: 600;
     margin-bottom: 20px;
@@ -147,7 +157,8 @@ body, html {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%); /* Ensures it anchors exactly in the middle */
+    transform: translate(-50%, -50%);
+    /* Ensures it anchors exactly in the middle */
     z-index: 20;
     background: var(--bg-surface);
     backdrop-filter: blur(var(--bg-blur));
@@ -192,9 +203,12 @@ body, html {
 /* Global Overlay for Warnings */
 #global_overlay {
     position: absolute;
-    bottom: 0; left: 0; right: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     padding: 12px;
-    background: rgba(239, 68, 68, 0.85); /* Red transparent */
+    background: rgba(239, 68, 68, 0.85);
+    /* Red transparent */
     backdrop-filter: blur(8px);
     color: white;
     text-align: center;
@@ -202,7 +216,7 @@ body, html {
     font-size: 14px;
     z-index: 50;
     display: none;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Close button for overlay */
@@ -225,7 +239,8 @@ body, html {
     justify-content: center;
     opacity: 0.8;
     transition: opacity 0.2s;
-    display: none; /* Hidden by default, only shown for errors */
+    display: none;
+    /* Hidden by default, only shown for errors */
 }
 
 #global_overlay .close-btn:hover {
@@ -233,7 +248,8 @@ body, html {
 }
 
 #global_overlay.error .close-btn {
-    display: flex; /* Show close button when overlay has error class */
+    display: flex;
+    /* Show close button when overlay has error class */
 }
 
 #global_overlay.visible {

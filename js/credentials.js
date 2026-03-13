@@ -18,49 +18,76 @@ export function save_credentials(github_token, maptiler_key) {
     if (maptiler_key) localStorage.setItem('fieldmap_maptiler_key', maptiler_key);
 }
 
-export function populate_inputs_from_local_storage() {
-    const creds = get_credentials();
-    const ghInput = document.getElementById('github_token');
-    const mtInput = document.getElementById('maptiler_key');
-    if (ghInput) ghInput.value = creds.github_token;
-    if (mtInput) mtInput.value = creds.maptiler_key;
-}
 
-export function setup_credentials_ui() {
-    const popover = document.getElementById('credentials_popover');
-    const saveBtn = document.getElementById('save_credentials_btn');
+let formEl, githubInput, maptilerInput;
 
-    // Populate inputs once on initialization
-    populate_inputs_from_local_storage();
+export const credentials_form = {
+    init() {
+        formEl = document.getElementById('credentials_form');
+        githubInput = document.getElementById('github_token');
+        maptilerInput = document.getElementById('maptiler_key');
 
-    // Handle Enter key to save credentials
-    popover.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && popover.matches(':popover-open')) {
-            e.preventDefault(); // Prevent default form submission behavior that interferes with popover closing
-            submit_credentials();
-        }
-    });
+        // Populate inputs once on initialization
+        this.fill();
 
-    // Save button click
-    saveBtn.addEventListener('click', submit_credentials);
-}
+        // Toggle full-screen visibility
+        document.getElementById('keys_btn').addEventListener('click', () => {
+            this.toggle();
+        });
 
-function submit_credentials() {
-    const ghToken = document.getElementById('github_token').value.trim();
-    const mtKey = document.getElementById('maptiler_key').value.trim();
+        // Handle Enter key to save credentials
+        formEl.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && this.is_visible()) {
+                e.preventDefault(); // Prevent default form submission behavior that interferes with element closing
+                this.submit();
+            }
+        });
 
-    if (!ghToken || !mtKey) return;
+        // Save button click
+        document.getElementById('save_credentials_btn').addEventListener('click', () => {
+            this.submit();
+        });
+    },
 
-    save_credentials(ghToken, mtKey);
+    fill() {
+        const creds = get_credentials();
+        if (githubInput) githubInput.value = creds.github_token;
+        if (maptilerInput) maptilerInput.value = creds.maptiler_key;
+    },
 
-    // Refresh the page to apply new credentials globally
-    location.reload();
-}
+    open() {
+        formEl.classList.add('visible');
+    },
+
+    close() {
+        formEl.classList.remove('visible');
+    },
+
+    is_visible() {
+        return formEl.classList.contains('visible');
+    },
+
+    toggle() {
+        formEl.classList.toggle('visible');
+    },
+
+    submit() {
+        const ghToken = githubInput.value.trim();
+        const mtKey = maptilerInput.value.trim();
+
+        if (!ghToken || !mtKey) return;
+
+        save_credentials(ghToken, mtKey);
+
+        // Refresh the page to apply new credentials globally
+        location.reload();
+    }
+};
 
 /**
  * Ensures credentials exist before proceeding.
  * If credentials exist, resolves immediately.
- * Otherwise, shows the popover and returns a pending Promise.
+ * Otherwise, shows the full-screen interface and returns a pending Promise.
  */
 export function ensure_credentials() {
     const creds = get_credentials();
@@ -69,7 +96,7 @@ export function ensure_credentials() {
         return Promise.resolve(creds);
     }
 
-    // Show popover and stay pending (blocking bootstrap until reload)
-    document.getElementById('credentials_popover').showPopover();
+    // Show full-screen UI and stay pending (blocking bootstrap until reload)
+    credentials_form.open();
     return new Promise(() => { }); // Never resolves, bootstrap remains stalled
 }

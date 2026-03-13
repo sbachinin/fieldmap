@@ -5,7 +5,7 @@
  * Manages the high-level state, wires event flow, and initializes modules.
  */
 
-import { setup_credentials_ui, ensure_credentials } from './credentials.js';
+import { credentials_form, ensure_credentials } from './credentials.js';
 import { create_map, reload_map_style } from './map.js';
 import { load_existing_markers } from './marker_loader.js';
 import { init_image_acquisition } from './image_acquisition.js';
@@ -21,7 +21,7 @@ let current_active_coordinates = null;
 
 async function bootstrap() {
     // 1. Setup credentials UI and ensure keys are available
-    setup_credentials_ui();
+    credentials_form.init();
     const creds = await ensure_credentials();
 
     // 2. Initialize map and location
