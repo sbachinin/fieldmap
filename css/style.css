@@ -167,7 +167,8 @@ html {
     border-radius: 12px;
     box-shadow: var(--shadow);
     padding: 8px 0;
-    min-width: 180px;
+    width: max-content;
+    min-width: 120px;
     display: none;
     user-select: none;
     -webkit-user-select: none;
@@ -189,6 +190,7 @@ html {
     font-weight: 500;
     cursor: pointer;
     transition: background 0.2s;
+    white-space: nowrap;
 }
 
 #context_menu_options li:hover {
