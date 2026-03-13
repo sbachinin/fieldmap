@@ -54,14 +54,9 @@ export function init_credentials() {
             if (!ghToken || !mtKey) return;
 
             save_credentials(ghToken, mtKey);
-            popover.hidePopover();
             
-            const payload = { github_token: ghToken, maptiler_key: mtKey };
-            events.emit('credentials_saved', payload);
-            
-            // This unblocks bootstrap() on first load. 
-            // On subsequent clicks, the promise is already resolved, so this is a no-op.
-            resolve(payload);
+            // Refresh the page to apply new credentials globally
+            location.reload();
         }
 
         // Save button always works: persist to localStorage, close popover, notify listeners

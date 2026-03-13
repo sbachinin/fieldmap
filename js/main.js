@@ -26,12 +26,6 @@ async function bootstrap() {
     // 2. Initialize map and location
     await create_map(creds.maptiler_key);
 
-    // Reload map style whenever credentials are updated later (e.g. to fix a wrong key)
-    events.on('credentials_saved', (payload) => {
-        reload_map_style(payload.maptiler_key);
-        load_existing_markers();
-    });
-
 
     // 3. Load existing markers from GitHub
     await load_existing_markers();
