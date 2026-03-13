@@ -5,7 +5,6 @@
  * Controls the HTML Popover API for the credentials dialog.
  */
 
-import * as events from './events.js';
 
 export function get_credentials() {
     return {
