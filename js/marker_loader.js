@@ -7,9 +7,9 @@
 
 import { get_credentials } from './credentials.js';
 import * as map_module from './map.js';
+import { GITHUB_CONFIG } from './constants.js';
 
-const OWNER = 'sbachinin';
-const REPO = 'reference-images-for-map';
+const { OWNER, REPO } = GITHUB_CONFIG;
 
 export async function load_existing_markers() {
     const { github_token } = get_credentials();

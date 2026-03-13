@@ -70,7 +70,10 @@ function process_image(file) {
             );
         };
         
-        img.onerror = reject;
+        img.onerror = (error) => {
+            URL.revokeObjectURL(url);
+            reject(error);
+        };
         img.src = url;
     });
 }

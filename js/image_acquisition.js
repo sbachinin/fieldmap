@@ -33,4 +33,9 @@ export function init_image_acquisition() {
         }
         current_action_state = null; // Clear state
     });
+
+    // Also clear state if user cancels file selection (empty files array)
+    cameraInput.addEventListener('cancel', () => {
+        current_action_state = null;
+    });
 }

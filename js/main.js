@@ -90,7 +90,7 @@ async function bootstrap() {
 
             // Add new marker to map if it wasn't a replacement
             if (!isReplacing) {
-                map_module.add_marker(lat, lon, false);
+                map_module.add_marker(lat, lon);
             }
 
             show_success("Upload successful!");
