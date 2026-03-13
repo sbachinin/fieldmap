@@ -5,7 +5,7 @@
  */
 
 import { get_credentials } from './credentials.js';
-import { generate_storage_path } from './utils.js';
+import { generate_storage_path, coords_to_folder_name } from './utils.js';
 import { GITHUB_CONFIG } from './constants.js';
 
 const { OWNER, REPO } = GITHUB_CONFIG;
@@ -74,12 +74,12 @@ export async function upload_image(path, blob) {
  * @param {Blob} blob - The new image blob
  */
 export async function replace_image(lat, lon, blob) {
-    const latStr = Number(lat).toFixed(5);
-    const lonStr = Number(lon).toFixed(5);
-    const folderPath = `photos/${latStr}_${lonStr}`;
-    const folderUrl = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${folderPath}`;
+    const folder_url = 'https://api.github.com/repos/' +
+        OWNER + '/' +
+        REPO + '/contents/photos/' +
+        coords_to_folder_name(lat, lon);
 
-    const res = await fetch(folderUrl, { headers: get_headers() });
+    const res = await fetch(folder_url, { headers: get_headers() });
     
     // If the folder doesn't exist, we fall through to regular upload
     if (!res.ok) {
