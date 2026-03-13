@@ -84,15 +84,12 @@ export async function replace_image(lat, lon, blob) {
     try {
         files = await github_request(folderPath);
     } catch (err) {
-        // If the folder doesn't exist, we fall through to regular upload
-        const path = generate_storage_path(lat, lon);
-        return upload_image(path, blob);
+        throw new Error(`Cannot replace photo: The coordinate folder '${folderPath}' could not be retrieved.`);
     }
     
-    // If folder is somehow empty, fall through to regular upload
+    // If folder is somehow empty, we cannot "replace" anything.
     if (!files || files.length === 0) {
-        const path = generate_storage_path(lat, lon);
-        return upload_image(path, blob);
+        throw new Error(`Cannot replace photo: No existing files found in '${folderPath}'.`);
     }
 
     // Usually there is only 1 file per folder. We replace the first one.

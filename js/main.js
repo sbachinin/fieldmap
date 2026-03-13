@@ -91,7 +91,7 @@ async function bootstrap() {
             show_success("Upload successful!");
         } catch (err) {
             console.error(err);
-            show_error("Upload failed. Check connection or token.");
+            show_error(err.message || "Upload failed. Check connection or token.");
         } finally {
             current_active_coordinates = null; // Clear state
         }
