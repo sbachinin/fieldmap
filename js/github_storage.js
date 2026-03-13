@@ -10,16 +10,29 @@ import { GITHUB_CONFIG } from './constants.js';
 
 const { OWNER, REPO } = GITHUB_CONFIG;
 
-function get_headers() {
+async function github_request(endpoint, options = {}) {
     const { github_token } = get_credentials();
     if (!github_token) {
         throw new Error("GitHub token is missing in credentials.");
     }
-    return {
+
+    const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${endpoint}`;
+    
+    const headers = {
         'Authorization': `Bearer ${github_token}`,
         'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...options.headers
     };
+
+    const res = await fetch(url, { ...options, headers });
+
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(`GitHub API request failed: ${res.statusText} - ${errorData.message || ''}`);
+    }
+
+    return await res.json();
 }
 
 /**
@@ -44,7 +57,6 @@ function blob_to_base64(blob) {
  * @param {Blob} blob - The image blob to upload.
  */
 export async function upload_image(path, blob) {
-    const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
     const base64Content = await blob_to_base64(blob);
 
     const body = {
@@ -52,18 +64,10 @@ export async function upload_image(path, blob) {
         content: base64Content
     };
 
-    const res = await fetch(url, {
+    return github_request(path, {
         method: 'PUT',
-        headers: get_headers(),
         body: JSON.stringify(body)
     });
-
-    if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(`GitHub API upload failed: ${res.statusText} - ${errorData.message || ''}`);
-    }
-    
-    return await res.json();
 }
 
 /**
@@ -74,20 +78,16 @@ export async function upload_image(path, blob) {
  * @param {Blob} blob - The new image blob
  */
 export async function replace_image(lat, lon, blob) {
-    const folder_url = 'https://api.github.com/repos/' +
-        OWNER + '/' +
-        REPO + '/contents/photos/' +
-        coords_to_folder_name(lat, lon);
+    const folderPath = `photos/${coords_to_folder_name(lat, lon)}`;
 
-    const res = await fetch(folder_url, { headers: get_headers() });
-    
-    // If the folder doesn't exist, we fall through to regular upload
-    if (!res.ok) {
+    let files;
+    try {
+        files = await github_request(folderPath);
+    } catch (err) {
+        // If the folder doesn't exist, we fall through to regular upload
         const path = generate_storage_path(lat, lon);
         return upload_image(path, blob);
     }
-
-    const files = await res.json();
     
     // If folder is somehow empty, fall through to regular upload
     if (!files || files.length === 0) {
@@ -97,7 +97,6 @@ export async function replace_image(lat, lon, blob) {
 
     // Usually there is only 1 file per folder. We replace the first one.
     const file = files[0];
-    const fileUrl = file.url; // This is the exact API endpoint to PUT updates to this specific file
     const base64Content = await blob_to_base64(blob);
 
     const body = {
@@ -106,18 +105,10 @@ export async function replace_image(lat, lon, blob) {
         sha: file.sha // Required by GitHub API to update/overwrite an existing file
     };
 
-    const updateRes = await fetch(fileUrl, {
+    return github_request(file.path, {
         method: 'PUT',
-        headers: get_headers(),
         body: JSON.stringify(body)
     });
-
-    if (!updateRes.ok) {
-        const errorData = await updateRes.json().catch(() => ({}));
-        throw new Error(`GitHub API replace failed: ${updateRes.statusText} - ${errorData.message || ''}`);
-    }
-
-    return await updateRes.json();
 }
 
 /**
