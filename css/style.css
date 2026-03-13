@@ -158,6 +158,10 @@ body, html {
     padding: 8px 0;
     min-width: 180px;
     display: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 #context_menu.visible {
