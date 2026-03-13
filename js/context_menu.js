@@ -9,16 +9,27 @@ import * as events from './events.js';
 const menu_el = document.getElementById('context_menu');
 const options_el = document.getElementById('context_menu_options');
 
+function clamp_position(x, y, el, padding = 10) {
+    const rect = el.getBoundingClientRect();
+    const maxX = window.innerWidth - rect.width - padding;
+    const maxY = window.innerHeight - rect.height - padding;
+    
+    return {
+        x: Math.max(padding, Math.min(x, maxX)),
+        y: Math.max(padding, Math.min(y, maxY))
+    };
+}
+
 function position_menu_at_cursor(x, y) {
     if (!menu_el) return;
     
-    // Position menu slightly offset from the exact click pixel
-    // and override the centered styling from CSS
-    menu_el.style.top = `${y}px`;
-    menu_el.style.left = `${x}px`;
+    const clamped = clamp_position(x, y, menu_el);
     
-    // Instead of completely centering, anchor to the top-left of the cursor
-    menu_el.style.transform = 'translate(10px, 10px)';
+    menu_el.style.top = `${clamped.y}px`;
+    menu_el.style.left = `${clamped.x}px`;
+    
+    // Remove the static transform as we are now clamping the absolute position
+    menu_el.style.transform = 'none';
 }
 
 // Create the click outside listener once and reuse it
@@ -71,8 +82,9 @@ export function show_context_menu(lat, lon, is_existing_marker, x, y) {
 
     options_el.appendChild(action_li);
 
-    position_menu_at_cursor(x, y);
+    // Make menu visible first so we can measure it for positioning
     menu_el.classList.add('visible');
+    position_menu_at_cursor(x, y);
 }
 
 export function hide_context_menu() {
