@@ -88,6 +88,7 @@ html {
 }
 
 .credentials-content {
+    position: relative;
     background: white;
     padding: 32px;
     border-radius: var(--radius);
@@ -150,6 +151,31 @@ html {
 
 #save_credentials_btn:hover {
     background: var(--accent-hover);
+}
+
+/* Close button for credentials screen */
+.close-credentials-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 300;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s;
+    user-select: none;
+    line-height: 1;
+}
+
+.close-credentials-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
 }
 
 /* Context Menu */

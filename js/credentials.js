@@ -47,6 +47,11 @@ export const credentials_form = {
         document.getElementById('save_credentials_btn').addEventListener('click', () => {
             this.submit();
         });
+
+        // Close button click
+        document.getElementById('close_credentials_btn').addEventListener('click', () => {
+            this.close();
+        });
     },
 
     fill() {
