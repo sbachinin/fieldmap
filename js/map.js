@@ -20,8 +20,21 @@ export async function create_map(maptiler_key) {
         center = [loc.lon, loc.lat];
         zoom = 18;
     } catch (err) {
-        console.warn("Geolocation failed:", err);
-        show_warning("Location unavailable. Defaulting to global view.");
+        let msg = `Geolocation failed: ${err.message}. `;
+
+        // Fallback to last saved location from localStorage
+        const savedLat = localStorage.getItem('fieldmap_last_lat');
+        const savedLon = localStorage.getItem('fieldmap_last_lon');
+        const savedZoom = localStorage.getItem('fieldmap_last_zoom');
+
+        if (savedLat && savedLon && savedZoom) {
+            center = [parseFloat(savedLon), parseFloat(savedLat)];
+            zoom = parseFloat(savedZoom);
+            msg += "Restoring last viewed location.";
+        } else {
+            msg += "Defaulting to global view.";
+        }
+        show_warning(msg);
     }
 
     // Initialize MapLibre Map
@@ -75,6 +88,15 @@ export async function create_map(maptiler_key) {
     // Hide context menu when map starts moving/panning
     mapInstance.on('dragstart', () => {
         events.emit('map_drag', {});
+    });
+
+    // Save map location on moveend for persistence
+    mapInstance.on('moveend', () => {
+        const center = mapInstance.getCenter();
+        const zoom = mapInstance.getZoom();
+        localStorage.setItem('fieldmap_last_lat', center.lat);
+        localStorage.setItem('fieldmap_last_lon', center.lng);
+        localStorage.setItem('fieldmap_last_zoom', zoom);
     });
 
     return mapInstance;
