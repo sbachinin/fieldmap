@@ -122,6 +122,15 @@ export function add_marker(lat, lon) {
         .addTo(mapInstance);
 }
 
+/**
+ * Renders multiple markers on the map at once.
+ * @param {Array<{lat: number, lon: number}>} locations
+ */
+export function add_markers(locations) {
+    if (!locations || !Array.isArray(locations)) return;
+    locations.forEach(loc => add_marker(loc.lat, loc.lon));
+}
+
 // Private helper — injected on initial load
 function add_vector_overlays() {
     try {

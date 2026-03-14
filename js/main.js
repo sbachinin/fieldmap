@@ -7,7 +7,7 @@
 
 import { credentials_form, ensure_credentials } from './credentials.js';
 import { create_map } from './map.js';
-import { load_existing_markers } from './marker_loader.js';
+import * as storage_api from './storage_api.js';
 import { init_image_acquisition } from './image_acquisition.js';
 import { handle_image_selection } from './image_processing.js';
 import { show_context_menu, hide_context_menu, is_context_menu_visible } from './context_menu.js';
@@ -25,8 +25,9 @@ async function bootstrap() {
     await create_map(creds.maptiler_key);
 
 
-    // 3. Load existing markers from GitHub
-    await load_existing_markers();
+    // 3. Load existing markers from storage
+    const locations = await storage_api.load_markers();
+    map_module.add_markers(locations);
 
     // 4. Initialize Sub-modules
     init_image_acquisition();

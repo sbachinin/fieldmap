@@ -1,38 +1,26 @@
 /**
- * github_storage.js
+ * js/github/storage.js
  * 
  * Implements the storage operations specifically against the GitHub REST API.
  */
 
-import { get_credentials } from './credentials.js';
-import { generate_storage_path, coords_to_folder_name } from './utils.js';
-import { GITHUB_CONFIG } from './constants.js';
+import { github_request } from './client.js';
+import { coords_to_folder_name, get_unique_locations_from_tree } from '../utils.js';
 
-const { OWNER, REPO } = GITHUB_CONFIG;
-
-async function github_request(endpoint, options = {}) {
-    const { github_token } = get_credentials();
-    if (!github_token) {
-        throw new Error("GitHub token is missing in credentials.");
+/**
+ * Fetches all existing coordinate folders using the Git Trees API.
+ * @returns {Promise<Array<{lat: number, lon: number}>>}
+ */
+export async function load_markers() {
+    try {
+        const data = await github_request('git/trees/main?recursive=1');
+        if (!data || !data.tree) return [];
+        
+        return get_unique_locations_from_tree(data.tree);
+    } catch (err) {
+        console.error("Failed to load markers from GitHub:", err.message);
+        return [];
     }
-
-    const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${endpoint}`;
-    
-    const headers = {
-        'Authorization': `Bearer ${github_token}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json',
-        ...options.headers
-    };
-
-    const res = await fetch(url, { ...options, headers });
-
-    if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(`GitHub API request failed: ${res.statusText} - ${errorData.message || ''}`);
-    }
-
-    return await res.json();
 }
 
 /**
@@ -64,7 +52,7 @@ export async function upload_image(path, blob) {
         content: base64Content
     };
 
-    return github_request(path, {
+    return github_request(`contents/${path}`, {
         method: 'PUT',
         body: JSON.stringify(body)
     });
@@ -82,9 +70,9 @@ export async function replace_image(lat, lon, blob) {
 
     let files;
     try {
-        files = await github_request(folderPath);
+        files = await github_request(`contents/${folderPath}`);
     } catch (err) {
-        throw new Error(`Cannot replace photo: The coordinate folder '${folderPath}' could not be retrieved.`);
+        throw new Error(`Cannot replace photo: The coordinate folder '${folderPath}' could not be retrieved. ${err.message}`);
     }
     
     // If folder is somehow empty, we cannot "replace" anything.
@@ -102,15 +90,9 @@ export async function replace_image(lat, lon, blob) {
         sha: file.sha // Required by GitHub API to update/overwrite an existing file
     };
 
-    return github_request(file.path, {
+    return github_request(`contents/${file.path}`, {
         method: 'PUT',
         body: JSON.stringify(body)
     });
 }
 
-/**
- * Placeholder implementation, marker_loader.js normally handles tree fetching directly.
- */
-export async function list_images() {
-    throw new Error("list_images not implemented directly in storage API. Use marker_loader.js Git Trees API approach.");
-}
