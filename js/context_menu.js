@@ -54,7 +54,7 @@ const click_outside_listener = (e) => {
 // Register the click outside listener once and forever
 document.addEventListener('click', click_outside_listener, true);
 
-export function show_context_menu(lat, lon, is_existing_marker, x, y) {
+export function show_context_menu(subject, x, y) {
     if (!menu_el || !options_el) return;
     
     // Ensure we clean up any previous state before opening a new one
@@ -65,17 +65,17 @@ export function show_context_menu(lat, lon, is_existing_marker, x, y) {
     // Create the main action item
     const action_li = document.createElement('li');
     
-    if (is_existing_marker) {
+    if (subject.click_target === 'photo_marker') {
         action_li.textContent = 'Replace photo';
         action_li.className = 'danger';
         action_li.onclick = () => {
-            events.emit('action_selected', { action: 'replace_photo', lat, lon });
+            events.emit('action_selected', { action: 'replace_photo', subject });
             hide_context_menu();
         };
     } else {
         action_li.textContent = 'Create photo marker';
         action_li.onclick = () => {
-            events.emit('action_selected', { action: 'create_photo', lat, lon });
+            events.emit('action_selected', { action: 'create_photo', subject });
             hide_context_menu();
         };
     }

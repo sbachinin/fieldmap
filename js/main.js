@@ -36,36 +36,35 @@ async function bootstrap() {
 
     // Tap on the map
     events.on('map_tap', (payload) => {
-        // If a context menu is currently open, a click anywhere (including map) 
-        // should just close it rather than spawning a new marker prompt.
         if (is_context_menu_visible()) {
             hide_context_menu();
-            end_session(); // Clear session if menu is manually dismissed
         } else {
-            try {
-                begin_session(payload.lat, payload.lon, false);
-                show_context_menu(payload.lat, payload.lon, false, payload.point.x, payload.point.y);
-            } catch (error) {
-                show_warning(error.message);
-            }
+            const subject = { lat: payload.lat, lon: payload.lon, click_target: 'map' };
+            show_context_menu(subject, payload.point.x, payload.point.y);
         }
     });
 
     // Tap on an existing marker -> open context menu for replacing photo
     events.on('marker_tap', (payload) => {
-        try {
-            begin_session(payload.lat, payload.lon, true);
-            show_context_menu(payload.lat, payload.lon, true, payload.point.x, payload.point.y);
-        } catch (error) {
-            show_warning(error.message);
-        }
+        const subject = { lat: payload.lat, lon: payload.lon, click_target: 'photo_marker' };
+        show_context_menu(subject, payload.point.x, payload.point.y);
     });
 
     // Auto-close menu when map is dragged/panned
     events.on('map_drag', () => {
         if (is_context_menu_visible()) {
             hide_context_menu();
-            end_session(); // Clear session if menu is manually dismissed
+        }
+    });
+
+    // Start session when an image-related action is selected from the menu
+    events.on('action_selected', ({ action, subject }) => {
+        if (action === 'create_photo' || action === 'replace_photo') {
+            try {
+                begin_session(subject.lat, subject.lon, subject.click_target === 'photo_marker');
+            } catch (error) {
+                show_warning(error.message);
+            }
         }
     });
 
