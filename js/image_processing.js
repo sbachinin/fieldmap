@@ -6,7 +6,6 @@
  */
 
 import { show_loading, show_error, show_success } from './message_overlay.js';
-import { get_session, end_session } from './current_image_upload_session.js';
 import * as events from './events.js';
 import * as storage_api from './storage_api.js';
 import { generate_storage_path } from './utils.js';
@@ -19,35 +18,29 @@ const TARGET_QUALITY = 0.7; // Initial JPEG quality to ensure < 100KB constraint
  * Called when 'image_selected' event is emitted.
  */
 export async function handle_image_selection(payload) {
-    const { file } = payload;
+    const { file, subject } = payload;
     
     try {
         show_loading("Processing image...");
         const blob = await process_image(file);
         
-        await upload_processed_image(blob);
+        await upload_processed_image(blob, subject);
     } catch (error) {
         console.error("Image flow failed", error);
         show_error(error.message || "Operation failed. Please try again.");
-    } finally {
-        end_session();
     }
 }
 
 /**
  * Handles the upload and subsequent success UI of a processed image blob.
  */
-async function upload_processed_image(blob) {
-    const session = get_session();
-    if (!session) {
-        throw new Error("No active image upload session found.");
-    }
+async function upload_processed_image(blob, subject) {
+    const { lat, lon, click_target } = subject;
+    const isReplacing = click_target === 'photo_marker';
 
-    const { lat, lon, is_replacing } = session;
-
-    show_loading(is_replacing ? "Replacing photo..." : "Uploading photo...");
+    show_loading(isReplacing ? "Replacing photo..." : "Uploading photo...");
             
-    if (is_replacing) {
+    if (isReplacing) {
         await storage_api.replace_image(lat, lon, blob);
     } else {
         const path = generate_storage_path(lat, lon);
@@ -55,7 +48,7 @@ async function upload_processed_image(blob) {
     }
 
     show_success("Upload successful!");
-    events.emit('upload_complete', { lat, lon, isReplacing: is_replacing });
+    events.emit('upload_complete', { lat, lon, isReplacing });
 }
 
 function process_image(file) {

@@ -5,15 +5,16 @@
  */
 
 import * as events from './events.js';
-import { end_session } from './current_image_upload_session.js';
 
 export function init_image_acquisition() {
     const cameraInput = document.getElementById('camera_input');
+    let currentSubject = null;
     
     // When ACTION_SELECTED is emitted, trigger the hidden file input
     events.on('action_selected', ({ action, subject }) => {
         // action: 'create_photo' | 'replace_photo'
         if (action === 'create_photo' || action === 'replace_photo') {
+            currentSubject = subject;
             cameraInput.value = ''; // Reset to ensure change event fires even if same file is selected
             cameraInput.click();
         }
@@ -22,13 +23,12 @@ export function init_image_acquisition() {
     // Handle file selection from camera/gallery
     cameraInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
-        if (file) {
-            events.emit('image_selected', { file: file });
+        if (file && currentSubject) {
+            events.emit('image_selected', { 
+                file: file,
+                subject: currentSubject
+            });
+            currentSubject = null;
         }
-    });
-
-    // Handle cancellation
-    cameraInput.addEventListener('cancel', () => {
-        end_session();
     });
 }

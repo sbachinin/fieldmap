@@ -12,7 +12,6 @@ import { init_image_acquisition } from './image_acquisition.js';
 import { handle_image_selection } from './image_processing.js';
 import { show_context_menu, hide_context_menu, is_context_menu_visible } from './context_menu.js';
 import { show_warning } from './message_overlay.js';
-import { begin_session, end_session } from './current_image_upload_session.js';
 import * as map_module from './map.js';
 import * as events from './events.js';
 
@@ -54,17 +53,6 @@ async function bootstrap() {
     events.on('map_drag', () => {
         if (is_context_menu_visible()) {
             hide_context_menu();
-        }
-    });
-
-    // Start session when an image-related action is selected from the menu
-    events.on('action_selected', ({ action, subject }) => {
-        if (action === 'create_photo' || action === 'replace_photo') {
-            try {
-                begin_session(subject.lat, subject.lon, subject.click_target === 'photo_marker');
-            } catch (error) {
-                show_warning(error.message);
-            }
         }
     });
 
