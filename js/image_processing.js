@@ -5,30 +5,57 @@
  * Drawing to canvas inherently strips EXIF metadata per the project specs.
  */
 
-import { show_loading, show_error } from './message_overlay.js';
+import { show_loading, show_error, show_success } from './message_overlay.js';
+import { get_session, end_session } from './current_image_upload_session.js';
 import * as events from './events.js';
+import * as storage_api from './storage_api.js';
+import { generate_storage_path } from './utils.js';
 
 const MAX_WIDTH = 1200; // Resize target max width
 const TARGET_QUALITY = 0.7; // Initial JPEG quality to ensure < 100KB constraint
 
-export function init_image_processing() {
-    events.on('image_selected', async (payload) => {
-        try {
-            // Show processing overlay
-            show_loading("Processing image...");
+/**
+ * Main entry point for processing and uploading a selected image.
+ * Called when 'image_selected' event is emitted.
+ */
+export async function handle_image_selection(payload) {
+    const { file } = payload;
+    
+    try {
+        show_loading("Processing image...");
+        const blob = await process_image(file);
+        
+        await upload_processed_image(blob);
+    } catch (error) {
+        console.error("Image flow failed", error);
+        show_error(error.message || "Operation failed. Please try again.");
+    } finally {
+        end_session();
+    }
+}
 
-            const processedBlob = await process_image(payload.file);
+/**
+ * Handles the upload and subsequent success UI of a processed image blob.
+ */
+async function upload_processed_image(blob) {
+    const session = get_session();
+    if (!session) {
+        throw new Error("No active image upload session found.");
+    }
+
+    const { lat, lon, is_replacing } = session;
+
+    show_loading(is_replacing ? "Replacing photo..." : "Uploading photo...");
             
-            events.emit('image_processed', {
-                blob: processedBlob,
-                lat: payload.lat,
-                lon: payload.lon
-            });
-        } catch (error) {
-            console.error("Image processing failed", error);
-            show_error("Image processing failed. Please try again.");
-        }
-    });
+    if (is_replacing) {
+        await storage_api.replace_image(lat, lon, blob);
+    } else {
+        const path = generate_storage_path(lat, lon);
+        await storage_api.upload_image(path, blob);
+    }
+
+    show_success("Upload successful!");
+    events.emit('upload_complete', { lat, lon, isReplacing: is_replacing });
 }
 
 function process_image(file) {

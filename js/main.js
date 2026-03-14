@@ -6,18 +6,16 @@
  */
 
 import { credentials_form, ensure_credentials } from './credentials.js';
-import { create_map, reload_map_style } from './map.js';
+import { create_map } from './map.js';
 import { load_existing_markers } from './marker_loader.js';
 import { init_image_acquisition } from './image_acquisition.js';
-import { init_image_processing } from './image_processing.js';
+import { handle_image_selection } from './image_processing.js';
 import { show_context_menu, hide_context_menu, is_context_menu_visible } from './context_menu.js';
-import * as storage_api from './storage_api.js';
+import { show_warning } from './message_overlay.js';
+import { begin_session, end_session } from './current_image_upload_session.js';
 import * as map_module from './map.js';
 import * as events from './events.js';
-import { show_loading, show_success, show_error } from './message_overlay.js';
 
-// Application State
-let current_active_coordinates = null;
 
 async function bootstrap() {
     // 1. Setup credentials UI and ensure keys are available
@@ -33,7 +31,6 @@ async function bootstrap() {
 
     // 4. Initialize Sub-modules
     init_image_acquisition();
-    init_image_processing();
 
     // 5. Wire Event Flow Interactivity
 
@@ -43,58 +40,47 @@ async function bootstrap() {
         // should just close it rather than spawning a new marker prompt.
         if (is_context_menu_visible()) {
             hide_context_menu();
+            end_session(); // Clear session if menu is manually dismissed
         } else {
-            current_active_coordinates = { lat: payload.lat, lon: payload.lon, is_existing: false };
-            show_context_menu(payload.lat, payload.lon, false, payload.point.x, payload.point.y);
+            try {
+                begin_session(payload.lat, payload.lon, false);
+                show_context_menu(payload.lat, payload.lon, false, payload.point.x, payload.point.y);
+            } catch (error) {
+                show_warning(error.message);
+            }
         }
     });
 
     // Tap on an existing marker -> open context menu for replacing photo
     events.on('marker_tap', (payload) => {
-        current_active_coordinates = { lat: payload.lat, lon: payload.lon, is_existing: true };
-        show_context_menu(payload.lat, payload.lon, true, payload.point.x, payload.point.y);
+        try {
+            begin_session(payload.lat, payload.lon, true);
+            show_context_menu(payload.lat, payload.lon, true, payload.point.x, payload.point.y);
+        } catch (error) {
+            show_warning(error.message);
+        }
     });
 
     // Auto-close menu when map is dragged/panned
     events.on('map_drag', () => {
         if (is_context_menu_visible()) {
             hide_context_menu();
+            end_session(); // Clear session if menu is manually dismissed
         }
     });
 
-    // After image is acquired and processed, handle upload depending on scenario
-    events.on('image_processed', async (payload) => {
-        const lat = payload.lat;
-        const lon = payload.lon;
-        const isReplacing = current_active_coordinates?.is_existing || false;
+    // Handle image selection (processing + upload)
+    events.on('image_selected', handle_image_selection);
 
-        // Show uploading indicator
-        show_loading(isReplacing ? "Replacing photo..." : "Uploading photo...");
+    // After upload is complete, update map markers
+    events.on('upload_complete', (payload) => {
+        const { lat, lon, isReplacing } = payload;
 
-        try {
-            if (isReplacing) {
-                await storage_api.replace_image(lat, lon, payload.blob);
-            } else {
-                const { generate_storage_path } = await import('./utils.js');
-                const path = generate_storage_path(lat, lon);
-                await storage_api.upload_image(path, payload.blob);
-            }
-
-            // Emit success
-            events.emit('upload_complete', { lat, lon });
-
-            // Add new marker to map if it wasn't a replacement
-            if (!isReplacing) {
-                map_module.add_marker(lat, lon);
-            }
-
-            show_success("Upload successful!");
-        } catch (err) {
-            console.error(err);
-            show_error(err.message || "Upload failed. Check connection or token.");
-        } finally {
-            current_active_coordinates = null; // Clear state
+        // Add new marker to map if it wasn't a replacement
+        if (!isReplacing) {
+            map_module.add_marker(lat, lon);
         }
+
     });
 }
 

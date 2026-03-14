@@ -5,8 +5,7 @@
  */
 
 import * as events from './events.js';
-
-let current_action_state = null; // { lat, lon }
+import { end_session } from './current_image_upload_session.js';
 
 export function init_image_acquisition() {
     const cameraInput = document.getElementById('camera_input');
@@ -15,7 +14,6 @@ export function init_image_acquisition() {
     events.on('action_selected', (payload) => {
         // payload: { action: 'create_photo' | 'replace_photo', lat, lon }
         if (payload.action === 'create_photo' || payload.action === 'replace_photo') {
-            current_action_state = { lat: payload.lat, lon: payload.lon };
             cameraInput.value = ''; // Reset to ensure change event fires even if same file is selected
             cameraInput.click();
         }
@@ -24,18 +22,13 @@ export function init_image_acquisition() {
     // Handle file selection from camera/gallery
     cameraInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
-        if (file && current_action_state) {
-            events.emit('image_selected', { 
-                file: file, 
-                lat: current_action_state.lat, 
-                lon: current_action_state.lon 
-            });
+        if (file) {
+            events.emit('image_selected', { file: file });
         }
-        current_action_state = null; // Clear state
     });
 
-    // Also clear state if user cancels file selection (empty files array)
+    // Handle cancellation
     cameraInput.addEventListener('cancel', () => {
-        current_action_state = null;
+        end_session();
     });
 }
