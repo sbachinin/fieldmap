@@ -80,7 +80,13 @@ export async function replace_image(lat, lon, blob) {
         throw new Error(`Cannot replace photo: No existing files found in '${folderPath}'.`);
     }
 
-    // Usually there is only 1 file per folder. We replace the first one.
+    // Defensive check: If there are multiple files, we don't know which one to replace.
+    // This indicates an architectural or manual data entry problem.
+    if (files.length > 1) {
+        throw new Error(`Cannot replace photo: The coordinate folder '${folderPath}' contains ${files.length} files. Expected exactly 1. This suggests an architectural inconsistency.`);
+    }
+
+    // Replace the single existing file.
     const file = files[0];
     const base64Content = await blob_to_base64(blob);
 
