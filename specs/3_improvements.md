@@ -8,9 +8,13 @@ This plan addresses two issues reported on Android devices.
 The map fails to render correctly after returning from the camera app.
 
 ### Proposed Changes
+#### [NEW] [apply_a_fix_for_white_map_after_taking_a_photo.js](file:///z:/home/sbachinin/projects/fieldmap/js/apply_a_fix_for_white_map_after_taking_a_photo.js)
+-   This function implements a robust refresh strategy for the MapLibre instance.
+-   It listens for `visibilitychange`, `pageshow`, and `focus` events to detect when the application returns to the foreground (e.g., after taking a photo).
+-   It uses a 100ms delay before calling `mapInstance.resize()` to ensure the browser has finished layout transitions and restored the WebGL context.
+
 #### [MODIFY] [map.js](file:///z:/home/sbachinin/projects/fieldmap/js/map.js)
-- Add a `visibilitychange` event listener to the document.
-- When the page becomes visible, call `mapInstance.resize()` to ensure the canvas is correctly sized and repainted. This is a common fix for WebGL containers losing context or state on mobile background/foreground transitions.
+-   Import and call `apply_a_fix_for_white_map_after_taking_a_photo(mapInstance)` to ensure the canvas is correctly sized and repainted.
 
 ### Verification Plan
 #### Manual Verification (User)
