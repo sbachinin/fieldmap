@@ -25,4 +25,11 @@ export function apply_a_fix_for_white_map_after_taking_a_photo(mapInstance) {
     });
     window.addEventListener('pageshow', robust_refresh);
     window.addEventListener('focus', robust_refresh);
+
+    mapInstance.getCanvas().addEventListener('webglcontextlost', (e) => {
+        e.preventDefault()
+    })
+    mapInstance.getCanvas().addEventListener('webglcontextrestored', () => {
+        mapInstance.resize()
+    })
 }
