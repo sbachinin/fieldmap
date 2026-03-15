@@ -14,7 +14,9 @@ export function apply_a_fix_for_white_map_after_taking_a_photo(mapInstance) {
         // before we ask MapLibre to recalculate its container size.
         setTimeout(() => {
             if (mapInstance) {
+                alert("mapInstance.resize() and mapInstance.triggerRepaint() called");
                 mapInstance.resize();
+                mapInstance.triggerRepaint();
             }
         }, 100);
     };
