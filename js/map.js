@@ -99,6 +99,14 @@ export async function create_map(maptiler_key) {
         localStorage.setItem('fieldmap_last_zoom', zoom);
     });
 
+    // Handle visibility changes (e.g., returning from camera app)
+    // to fix "white map" issue on some mobile browsers.
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && mapInstance) {
+            mapInstance.resize();
+        }
+    });
+
     return mapInstance;
 }
 
