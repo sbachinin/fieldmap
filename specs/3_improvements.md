@@ -4,21 +4,22 @@ This plan addresses two issues reported on Android devices.
 
 ---
 
-## 1. White Map in Firefox
-The map fails to render correctly after returning from the camera app.
+## 1. Firefox Mobile Disabled
+Firefox on mobile devices is disabled due to a persistent and difficult-to-solve "white map" issue.
 
-### Proposed Changes
-#### [NEW] [apply_a_fix_for_white_map_after_taking_a_photo.js](file:///z:/home/sbachinin/projects/fieldmap/js/apply_a_fix_for_white_map_after_taking_a_photo.js)
--   This function implements a robust refresh strategy for the MapLibre instance.
--   It listens for `visibilitychange`, `pageshow`, and `focus` events to detect when the application returns to the foreground (e.g., after taking a photo).
--   It uses a 100ms delay before calling `mapInstance.resize()` to ensure the browser has finished layout transitions and restored the WebGL context.
+### Decision Rationale
+After multiple attempts to fix the "white map" bug (where the map becomes blank after returning from the camera app in Firefox Android), it was decided to restrict the application to other browsers like Chrome. The bug appeared to be related to how Firefox handles WebGL context restoration or layout recalculations after being backgrounded by the camera app, and no reliable workaround was found.
 
-#### [MODIFY] [map.js](file:///z:/home/sbachinin/projects/fieldmap/js/map.js)
--   Import and call `apply_a_fix_for_white_map_after_taking_a_photo(mapInstance)` to ensure the canvas is correctly sized and repainted.
+### Implementation
+#### [NEW] [browser_check.js](file:///z:/home/sbachinin/projects/fieldmap/js/browser_check.js)
+- Detects Firefox on mobile (Android/iOS).
+- Displays a blocking message: "This map is unavailable on Firefox because of the problem, which was a white map after taking a picture in the camera. Therefore to avoid problems Firefox is disabled in this app and please use Chrome or anything else."
 
-### Verification Plan
-#### Manual Verification (User)
-1. **Test Firefox/Android**: Use the "Take photo" option, take a picture, and return to the app. Verify that the map is visible (not white) and the upload completes.
+#### [MODIFY] [index.html](file:///z:/home/sbachinin/projects/fieldmap/index.html)
+- Includes the browser check script to block access immediately.
+
+#### [DELETE] [apply_a_fix_for_white_map_after_taking_a_photo.js](file:///z:/home/sbachinin/projects/fieldmap/js/apply_a_fix_for_white_map_after_taking_a_photo.js)
+- Removed the previous unsuccessful fix.
 
 ---
 

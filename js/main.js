@@ -11,12 +11,17 @@ import * as storage_api from './storage_api.js';
 import { init_image_acquisition } from './image_acquisition.js';
 import { handle_image_selection } from './image_processing.js';
 import { show_context_menu, hide_context_menu, is_context_menu_visible } from './context_menu.js';
-import { show_warning } from './message_overlay.js';
 import * as map_module from './map.js';
 import * as events from './events.js';
-
+import { check_browser_and_block_if_needed } from './browser_check.js';
 
 async function bootstrap() {
+    // 0. Block execution if Firefox mobile is detected
+    if (check_browser_and_block_if_needed()) {
+        console.warn("Application execution blocked on Firefox mobile.");
+        return;
+    }
+
     // 1. Setup credentials UI and ensure keys are available
     credentials_form.init();
     const creds = await ensure_credentials();

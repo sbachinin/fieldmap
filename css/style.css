@@ -283,3 +283,46 @@ html {
 #global_overlay.visible {
     display: block;
 }
+
+
+
+/* Browser Block Overlay */
+#browser-block-overlay {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #f8fafc;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+}
+
+.block-message-container {
+    max-width: 400px;
+    background: white;
+    padding: 40px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+}
+
+.block-message-container h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--danger);
+}
+
+.block-message-container p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+body.browser-blocked {
+    overflow: hidden;
+}

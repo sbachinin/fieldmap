@@ -8,7 +8,6 @@
 import { get_current_location } from './location.js';
 import * as events from './events.js';
 import { show_warning, show_error } from './message_overlay.js';
-import { apply_a_fix_for_white_map_after_taking_a_photo } from './apply_a_fix_for_white_map_after_taking_a_photo.js';
 
 let mapInstance = null;
 
@@ -100,7 +99,6 @@ export async function create_map(maptiler_key) {
         localStorage.setItem('fieldmap_last_zoom', zoom);
     });
 
-    apply_a_fix_for_white_map_after_taking_a_photo(mapInstance);
 
     return mapInstance;
 }
