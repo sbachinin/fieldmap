@@ -14,7 +14,7 @@ function clamp_position(x, y, el, padding = 10) {
     const rect = el.getBoundingClientRect();
     const maxX = window.innerWidth - rect.width - padding;
     const maxY = window.innerHeight - rect.height - padding;
-    
+
     return {
         x: Math.max(padding, Math.min(x, maxX)),
         y: Math.max(padding, Math.min(y, maxY))
@@ -23,12 +23,12 @@ function clamp_position(x, y, el, padding = 10) {
 
 function position_menu_at_cursor(x, y) {
     if (!menu_el) return;
-    
+
     const clamped = clamp_position(x, y, menu_el);
-    
+
     menu_el.style.top = `${clamped.y}px`;
     menu_el.style.left = `${clamped.x}px`;
-    
+
     // Remove the static transform as we are now clamping the absolute position
     menu_el.style.transform = 'none';
 }
@@ -37,7 +37,7 @@ function position_menu_at_cursor(x, y) {
 const click_outside_listener = (e) => {
     // Only handle clicks when menu is visible
     if (!is_context_menu_visible()) return;
-    
+
     // If they clicked the menu itself, do nothing
     if (menu_el.contains(e.target)) return;
 
@@ -66,16 +66,20 @@ function add_menu_item({ label, action }) {
     options_el.appendChild(li);
 }
 
+function is_mobile() {
+    return /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
 export function show_context_menu(subject, x, y) {
     if (!menu_el || !options_el) return;
-    
+
     // Ensure we clean up any previous state before opening a new one
     hide_context_menu();
 
     options_el.innerHTML = '';
-    
+
     const { lat, lon } = subject;
-    
+
     // Add header with coordinates
     const header = document.createElement('li');
     header.className = 'menu-header';
@@ -83,15 +87,16 @@ export function show_context_menu(subject, x, y) {
     options_el.appendChild(header);
 
     const is_replacing = subject.click_target === 'photo_marker';
-    const action_prefix = is_replacing ? 'replace' : 'create';
+
+    if (is_mobile()) {
+        add_menu_item({
+            label: is_replacing ? 'Replace photo (via camera)' : 'Add photo marker (via camera)',
+            action: { type: 'upload_image', is_replacing, image_source: 'camera', lat, lon }
+        });
+    }
 
     add_menu_item({
-        label: is_replacing ? 'Replace photo (camera)' : 'Add photo marker (camera)',
-        action: { type: 'upload_image', is_replacing, image_source: 'camera', lat, lon }
-    });
-
-    add_menu_item({
-        label: is_replacing ? 'Replace photo (gallery)' : 'Add photo marker (gallery)',
+        label: is_replacing ? 'Replace photo (via gallery)' : 'Add photo marker (via gallery)',
         action: { type: 'upload_image', is_replacing, image_source: 'gallery', lat, lon }
     });
 
