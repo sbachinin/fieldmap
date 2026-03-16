@@ -22,6 +22,16 @@ async function bootstrap() {
         return;
     }
 
+    // 0.1 Register Service Worker for PWA
+    if ('serviceWorker' in navigator) {
+        try {
+            const registration = await navigator.serviceWorker.register('./sw.js');
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        } catch (err) {
+            console.error('ServiceWorker registration failed: ', err);
+        }
+    }
+
     // 1. Setup credentials UI and ensure keys are available
     credentials_form.init();
     const creds = await ensure_credentials();
