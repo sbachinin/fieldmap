@@ -5,6 +5,7 @@
  */
 
 import * as events from './events.js';
+import { coords_to_folder_name } from './utils.js';
 
 const menu_el = document.getElementById('context_menu');
 const options_el = document.getElementById('context_menu_options');
@@ -74,6 +75,13 @@ export function show_context_menu(subject, x, y) {
     options_el.innerHTML = '';
     
     const { lat, lon } = subject;
+    
+    // Add header with coordinates
+    const header = document.createElement('li');
+    header.className = 'menu-header';
+    header.textContent = coords_to_folder_name(lat, lon);
+    options_el.appendChild(header);
+
     const is_replacing = subject.click_target === 'photo_marker';
     const action_prefix = is_replacing ? 'replace' : 'create';
 
