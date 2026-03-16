@@ -44,8 +44,13 @@ export async function create_map(maptiler_key) {
             style: `https://api.maptiler.com/maps/satellite/style.json?key=${maptiler_key}`, // Base satellite
             center: center,
             zoom: zoom,
-            attributionControl: false // Completely disabled per requirements
+            attributionControl: false, // Completely disabled per requirements
+            dragRotate: false,
+            touchPitch: false
         });
+
+        // Disable rotation on mobile (pinch-to-rotate) while keeping pinch-to-zoom
+        mapInstance.touchZoomRotate.disableRotation();
 
         // Add error handling for map style loading
         mapInstance.on('error', (e) => {
