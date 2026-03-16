@@ -5,7 +5,6 @@
  * Handles styling overlays, MapTiler integration, and marker rendering.
  */
 
-import { get_current_location } from './location.js';
 import * as events from './events.js';
 import { show_warning, show_error } from './message_overlay.js';
 
@@ -15,26 +14,14 @@ export async function create_map(maptiler_key) {
     let center = [0, 0];
     let zoom = 1;
 
-    try {
-        const loc = await get_current_location();
-        center = [loc.lon, loc.lat];
-        zoom = 18;
-    } catch (err) {
-        let msg = `Geolocation failed: ${err.message}. `;
+    // Load last saved location from localStorage
+    const savedLat = localStorage.getItem('fieldmap_last_lat');
+    const savedLon = localStorage.getItem('fieldmap_last_lon');
+    const savedZoom = localStorage.getItem('fieldmap_last_zoom');
 
-        // Fallback to last saved location from localStorage
-        const savedLat = localStorage.getItem('fieldmap_last_lat');
-        const savedLon = localStorage.getItem('fieldmap_last_lon');
-        const savedZoom = localStorage.getItem('fieldmap_last_zoom');
-
-        if (savedLat && savedLon && savedZoom) {
-            center = [parseFloat(savedLon), parseFloat(savedLat)];
-            zoom = parseFloat(savedZoom);
-            msg += "Restoring last viewed location.";
-        } else {
-            msg += "Defaulting to global view.";
-        }
-        show_warning(msg);
+    if (savedLat && savedLon && savedZoom) {
+        center = [parseFloat(savedLon), parseFloat(savedLat)];
+        zoom = parseFloat(savedZoom);
     }
 
     // Initialize MapLibre Map
@@ -77,7 +64,6 @@ export async function create_map(maptiler_key) {
     mapInstance.addControl(geolocateControl, 'top-right');
 
     mapInstance.on('load', () => {
-        geolocateControl.trigger();
         add_vector_overlays();
     });
 
