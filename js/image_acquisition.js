@@ -9,17 +9,17 @@ import * as events from './events.js';
 export function init_image_acquisition() {
     const camera_input = document.getElementById('camera_input');
     const gallery_input = document.getElementById('gallery_input');
-    let current_subject = null;
+    let current_action = null;
     
     // Core handler for file selection (shared by both inputs)
     const handle_file_change = (e) => {
         const file = e.target.files[0];
-        if (file && current_subject) {
+        if (file && current_action) {
             events.emit('image_selected', { 
                 file: file,
-                subject: current_subject
+                action: current_action
             });
-            current_subject = null;
+            current_action = null;
         }
     };
 
@@ -28,15 +28,15 @@ export function init_image_acquisition() {
     gallery_input.addEventListener('change', handle_file_change);
 
     // Watch for action selection events
-    events.on('action_selected', ({ action, subject }) => {
-        // action: "create photo via camera" | "replace photo via gallery" | etc.
-        if (action.includes('photo')) {
-            current_subject = subject;
+    events.on('action_selected', ({ action }) => {
+        // action object: { type: 'upload_image', is_replacing: bool, image_source: 'camera'|'gallery', lat, lon }
+        if (action.type === 'upload_image') {
+            current_action = action;
             
-            if (action.includes('via camera')) {
+            if (action.image_source === 'camera') {
                 camera_input.value = ''; // Reset
                 camera_input.click();
-            } else if (action.includes('via gallery')) {
+            } else if (action.image_source === 'gallery') {
                 gallery_input.value = ''; // Reset
                 gallery_input.click();
             }

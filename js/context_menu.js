@@ -55,11 +55,11 @@ const click_outside_listener = (e) => {
 document.addEventListener('click', click_outside_listener, true);
 
 // Private helper to add a menu item
-function add_menu_item({ label, action, subject }) {
+function add_menu_item({ label, action }) {
     const li = document.createElement('li');
     li.textContent = label;
     li.onclick = () => {
-        events.emit('action_selected', { action, subject });
+        events.emit('action_selected', { action });
         hide_context_menu();
     };
     options_el.appendChild(li);
@@ -73,19 +73,18 @@ export function show_context_menu(subject, x, y) {
 
     options_el.innerHTML = '';
     
+    const { lat, lon } = subject;
     const is_replacing = subject.click_target === 'photo_marker';
     const action_prefix = is_replacing ? 'replace' : 'create';
 
     add_menu_item({
         label: is_replacing ? 'Replace photo (camera)' : 'Add photo marker (camera)',
-        action: `${action_prefix} photo via camera`,
-        subject
+        action: { type: 'upload_image', is_replacing, image_source: 'camera', lat, lon }
     });
 
     add_menu_item({
         label: is_replacing ? 'Replace photo (gallery)' : 'Add photo marker (gallery)',
-        action: `${action_prefix} photo via gallery`,
-        subject
+        action: { type: 'upload_image', is_replacing, image_source: 'gallery', lat, lon }
     });
 
     // Make menu visible first so we can measure it for positioning

@@ -13,18 +13,14 @@ import { generate_storage_path } from './utils.js';
 const MAX_WIDTH = 1200; // Resize target max width
 const TARGET_QUALITY = 0.7; // Initial JPEG quality to ensure < 100KB constraint
 
-/**
- * Main entry point for processing and uploading a selected image.
- * Called when 'image_selected' event is emitted.
- */
 export async function handle_image_selection(payload) {
-    const { file, subject } = payload;
+    const { file, action } = payload;
     
     try {
         show_loading("Processing image...");
         const blob = await process_image(file);
         
-        await upload_processed_image(blob, subject);
+        await upload_processed_image(blob, action);
     } catch (error) {
         console.error("Image flow failed", error);
         show_error(error.message || "Operation failed. Please try again.");
@@ -34,9 +30,8 @@ export async function handle_image_selection(payload) {
 /**
  * Handles the upload and subsequent success UI of a processed image blob.
  */
-async function upload_processed_image(blob, subject) {
-    const { lat, lon, click_target } = subject;
-    const is_replacing = click_target === 'photo_marker';
+async function upload_processed_image(blob, action) {
+    const { lat, lon, is_replacing } = action;
 
     show_loading(is_replacing ? "Replacing photo..." : "Uploading photo...");
             
