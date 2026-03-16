@@ -45,9 +45,11 @@
         <ul id="context_menu_options"></ul>
     </div>
 
-    <!-- Hidden Image Acquisition Input -->
-    <!-- Accept image types, allowing user to capture photo or pick from gallery on mobile -->
-    <input type="file" id="camera_input" accept="image/*" style="display: none;">
+    <!-- Hidden Image Acquisition Inputs -->
+    <!-- Force camera on mobile -->
+    <input type="file" id="camera_input" accept="image/*" capture="environment" style="display: none;">
+    <!-- Standard picker for gallery -->
+    <input type="file" id="gallery_input" accept="image/*" style="display: none;">
 
     <!-- MapLibre JS Library -->
     <script src="https://unpkg.com/maplibre-gl@latest/dist/maplibre-gl.js"></script>

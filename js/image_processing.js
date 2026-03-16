@@ -36,11 +36,11 @@ export async function handle_image_selection(payload) {
  */
 async function upload_processed_image(blob, subject) {
     const { lat, lon, click_target } = subject;
-    const isReplacing = click_target === 'photo_marker';
+    const is_replacing = click_target === 'photo_marker';
 
-    show_loading(isReplacing ? "Replacing photo..." : "Uploading photo...");
+    show_loading(is_replacing ? "Replacing photo..." : "Uploading photo...");
             
-    if (isReplacing) {
+    if (is_replacing) {
         await storage_api.replace_image(lat, lon, blob);
     } else {
         const path = generate_storage_path(lat, lon);
@@ -48,7 +48,7 @@ async function upload_processed_image(blob, subject) {
     }
 
     show_success("Upload successful!");
-    events.emit('upload_complete', { lat, lon, isReplacing });
+    events.emit('upload_complete', { lat, lon, is_replacing });
 }
 
 function process_image(file) {

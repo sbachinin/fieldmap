@@ -54,6 +54,17 @@ const click_outside_listener = (e) => {
 // Register the click outside listener once and forever
 document.addEventListener('click', click_outside_listener, true);
 
+// Private helper to add a menu item
+function add_menu_item({ label, action, subject }) {
+    const li = document.createElement('li');
+    li.textContent = label;
+    li.onclick = () => {
+        events.emit('action_selected', { action, subject });
+        hide_context_menu();
+    };
+    options_el.appendChild(li);
+}
+
 export function show_context_menu(subject, x, y) {
     if (!menu_el || !options_el) return;
     
@@ -62,25 +73,20 @@ export function show_context_menu(subject, x, y) {
 
     options_el.innerHTML = '';
     
-    // Create the main action item
-    const action_li = document.createElement('li');
-    
-    if (subject.click_target === 'photo_marker') {
-        action_li.textContent = 'Replace photo';
-        action_li.className = 'danger';
-        action_li.onclick = () => {
-            events.emit('action_selected', { action: 'replace_photo', subject });
-            hide_context_menu();
-        };
-    } else {
-        action_li.textContent = 'Create photo marker';
-        action_li.onclick = () => {
-            events.emit('action_selected', { action: 'create_photo', subject });
-            hide_context_menu();
-        };
-    }
+    const is_replacing = subject.click_target === 'photo_marker';
+    const action_prefix = is_replacing ? 'replace' : 'create';
 
-    options_el.appendChild(action_li);
+    add_menu_item({
+        label: is_replacing ? 'Replace photo (camera)' : 'Add photo marker (camera)',
+        action: `${action_prefix} photo via camera`,
+        subject
+    });
+
+    add_menu_item({
+        label: is_replacing ? 'Replace photo (gallery)' : 'Add photo marker (gallery)',
+        action: `${action_prefix} photo via gallery`,
+        subject
+    });
 
     // Make menu visible first so we can measure it for positioning
     menu_el.classList.add('visible');

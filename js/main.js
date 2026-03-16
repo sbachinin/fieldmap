@@ -67,10 +67,10 @@ async function bootstrap() {
 
     // After upload is complete, update map markers
     events.on('upload_complete', (payload) => {
-        const { lat, lon, isReplacing } = payload;
+        const { lat, lon, is_replacing } = payload;
 
         // Add new marker to map if it wasn't a replacement
-        if (!isReplacing) {
+        if (!is_replacing) {
             map_module.add_marker(lat, lon);
         }
 

@@ -1,34 +1,45 @@
 /**
  * image_acquisition.js
  * 
- * Handles reading from the device camera or gallery using a hidden file input.
+ * Handles reading from the device camera or gallery using separate hidden file inputs.
  */
 
 import * as events from './events.js';
 
 export function init_image_acquisition() {
-    const cameraInput = document.getElementById('camera_input');
-    let currentSubject = null;
+    const camera_input = document.getElementById('camera_input');
+    const gallery_input = document.getElementById('gallery_input');
+    let current_subject = null;
     
-    // When ACTION_SELECTED is emitted, trigger the hidden file input
-    events.on('action_selected', ({ action, subject }) => {
-        // action: 'create_photo' | 'replace_photo'
-        if (action === 'create_photo' || action === 'replace_photo') {
-            currentSubject = subject;
-            cameraInput.value = ''; // Reset to ensure change event fires even if same file is selected
-            cameraInput.click();
-        }
-    });
-
-    // Handle file selection from camera/gallery
-    cameraInput.addEventListener('change', (e) => {
+    // Core handler for file selection (shared by both inputs)
+    const handle_file_change = (e) => {
         const file = e.target.files[0];
-        if (file && currentSubject) {
+        if (file && current_subject) {
             events.emit('image_selected', { 
                 file: file,
-                subject: currentSubject
+                subject: current_subject
             });
-            currentSubject = null;
+            current_subject = null;
+        }
+    };
+
+    // Register listeners on both inputs
+    camera_input.addEventListener('change', handle_file_change);
+    gallery_input.addEventListener('change', handle_file_change);
+
+    // Watch for action selection events
+    events.on('action_selected', ({ action, subject }) => {
+        // action: "create photo via camera" | "replace photo via gallery" | etc.
+        if (action.includes('photo')) {
+            current_subject = subject;
+            
+            if (action.includes('via camera')) {
+                camera_input.value = ''; // Reset
+                camera_input.click();
+            } else if (action.includes('via gallery')) {
+                gallery_input.value = ''; // Reset
+                gallery_input.click();
+            }
         }
     });
 }
