@@ -5,7 +5,7 @@
  */
 
 import { github_request } from './client.js';
-import { coords_to_folder_name, get_unique_locations_from_tree } from '../utils.js';
+import { coords_to_folder_name, get_unique_locations_from_tree, generate_storage_path } from '../utils.js';
 
 /**
  * Fetches all existing coordinate folders using the Git Trees API.
@@ -31,8 +31,8 @@ function blob_to_base64(blob) {
         const reader = new FileReader();
         reader.onloadend = () => {
             // result is a data URL: data:image/jpeg;base64,xxxxxx...
-            const base64data = reader.result.split(',')[1];
-            resolve(base64data);
+            const base64_data = reader.result.split(',')[1];
+            resolve(base64_data);
         };
         reader.onerror = reject;
         reader.readAsDataURL(blob);
@@ -45,11 +45,11 @@ function blob_to_base64(blob) {
  * @param {Blob} blob - The image blob to upload.
  */
 export async function upload_image(path, blob) {
-    const base64Content = await blob_to_base64(blob);
+    const base64_content = await blob_to_base64(blob);
 
     const body = {
         message: "add reference photo via FieldMap",
-        content: base64Content
+        content: base64_content
     };
 
     return github_request(`contents/${path}`, {
@@ -59,63 +59,75 @@ export async function upload_image(path, blob) {
 }
 
 /**
- * Replaces an existing image at the specified coordinates by fetching its SHA first.
- * Overwrites the first file found in the coordinate folder, or normal upload if none exists.
+ * Replaces an existing image at the specified coordinates by deleting old ones and uploading a new one.
+ * This approach avoids GitHub CDN's aggressive caching of existing filenames.
  * @param {number} lat - Latitude
  * @param {number} lon - Longitude
  * @param {Blob} blob - The new image blob
  */
 export async function replace_image(lat, lon, blob) {
-    const folderPath = `photos/${coords_to_folder_name(lat, lon)}`;
+    const folder_path = `photos/${coords_to_folder_name(lat, lon)}`;
 
-    let files;
+    // 1. Fetch current files to identify what needs to be deleted later
+    let old_files;
     try {
-        files = await github_request(`contents/${folderPath}`);
+        old_files = await github_request(`contents/${folder_path}`);
     } catch (err) {
-        throw new Error(`Cannot replace photo: The coordinate folder '${folderPath}' could not be retrieved. ${err.message}`);
+        throw new Error(`Cannot replace photo: The coordinate folder '${folder_path}' could not be retrieved. ${err.message}`);
     }
     
-    // If folder is somehow empty, we cannot "replace" anything.
-    if (!files || files.length === 0) {
-        throw new Error(`Cannot replace photo: No existing files found in '${folderPath}'.`);
+    if (!old_files || old_files.length === 0) {
+        throw new Error(`Cannot replace photo: No existing files found in '${folder_path}'.`);
     }
 
-    // Defensive check: If there are multiple files, we don't know which one to replace.
-    // This indicates an architectural or manual data entry problem.
-    if (files.length > 1) {
-        throw new Error(`Cannot replace photo: The coordinate folder '${folderPath}' contains ${files.length} files. Expected exactly 1. This suggests an architectural inconsistency.`);
+    // 2. Upload the new image with a fresh timestamp (generates a new URL)
+    const new_path = generate_storage_path(lat, lon);
+    const result = await upload_image(new_path, blob);
+
+    // 3. Delete the old images
+    // We do this after successful upload to ensure we don't end up with no photo if upload fails.
+    for (const file of old_files) {
+        // Safety: don't delete the file we just uploaded
+        if (file.path === new_path) continue;
+
+        const body = {
+            message: "delete old reference photo via FieldMap replacement",
+            sha: file.sha
+        };
+
+        try {
+            await github_request(`contents/${file.path}`, {
+                method: 'DELETE',
+                body: JSON.stringify(body)
+            });
+        } catch (err) {
+            // If deletion fails, we don't stop the whole process as the new file is already up.
+            console.warn(`Failed to delete old file ${file.path} during replacement:`, err.message);
+        }
     }
 
-    // Replace the single existing file.
-    const file = files[0];
-    const base64Content = await blob_to_base64(blob);
-
-    const body = {
-        message: "replace reference photo via FieldMap",
-        content: base64Content,
-        sha: file.sha // Required by GitHub API to update/overwrite an existing file
-    };
-
-    return github_request(`contents/${file.path}`, {
-        method: 'PUT',
-        body: JSON.stringify(body)
-    });
+    return result;
 }
 
 /**
- * Retrieves the direct download URL for the first image found in the coordinate folder.
+ * Retrieves the direct download URL for the newest image found in the coordinate folder.
  * @param {number} lat - Latitude
  * @param {number} lon - Longitude
  * @returns {Promise<string|null>} The download URL or null if no image exists.
  */
 export async function get_image_url(lat, lon) {
-    const folderPath = `photos/${coords_to_folder_name(lat, lon)}`;
+    const folder_path = `photos/${coords_to_folder_name(lat, lon)}`;
 
     try {
-        const files = await github_request(`contents/${folderPath}`);
+        const files = await github_request(`contents/${folder_path}`);
         if (files && files.length > 0) {
-            // Return the download_url of the first file (which points to raw.githubusercontent.com)
-            return files[0].download_url;
+            // Ideally, there should only be one image per folder. However, during the
+            // "Delete-and-Create" replacement process, there may be a brief moment 
+            // where both the old and new images exist. Sorting alphabetically by the 
+            // timestamped filename (IMG_TIMESTAMP.jpg) ensures we always pick the newest.
+            files.sort((a, b) => a.path.localeCompare(b.path));
+            // Return the download_url of the newest file
+            return files[files.length - 1].download_url;
         }
     } catch (err) {
         // If 404, it just means no photo exists yet for these coords
