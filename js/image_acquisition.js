@@ -27,6 +27,19 @@ export function init_image_acquisition() {
     camera_input.addEventListener('change', handle_file_change);
     gallery_input.addEventListener('change', handle_file_change);
 
+    /**
+     * When the user returns to the app (window.focus), if no file was selected,
+     * we clear the current_action after a small delay to ensure 'change' had time to fire.
+     */
+    window.addEventListener('focus', () => {
+        setTimeout(() => {
+            if (current_action) {
+                console.log("File selection cancelled by user. Resetting action state.");
+                current_action = null;
+            }
+        }, 1000); // 1s is usually enough for the 'change' event to propagate first
+    });
+
     // Watch for action selection events
     events.on('action_selected', ({ action }) => {
         // action object: { type: 'upload_image', is_replacing: bool, image_source: 'camera'|'gallery', lat, lon }
