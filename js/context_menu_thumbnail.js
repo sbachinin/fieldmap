@@ -6,6 +6,8 @@
 
 import * as storage from './storage_api.js';
 
+let image_request_counter = 0;
+
 /**
  * Updates the context menu thumbnail based on the current location and action type.
  * @param {number} lat - Latitude
@@ -20,6 +22,8 @@ export function update_thumbnail(lat, lon, is_replacing) {
 
     if (!thumb_img || !thumb_error || !menu_el || !thumb_link) return;
 
+    const request_id = ++image_request_counter;
+
     // Reset state
     thumb_img.src = '';
     thumb_link.href = '#';
@@ -31,6 +35,8 @@ export function update_thumbnail(lat, lon, is_replacing) {
         menu_el.classList.add('existing-marker');
         // Fetch and display the thumbnail
         storage.get_image_url(lat, lon).then((url) => {
+            if (request_id !== image_request_counter) return;
+
             if (url) {
                 // Add cache-buster to ensure we get the latest image
                 const cacheBuster = `?t=${Date.now()}`;
@@ -42,6 +48,7 @@ export function update_thumbnail(lat, lon, is_replacing) {
                 thumb_error.style.display = 'block';
             }
         }).catch(err => {
+            if (request_id !== image_request_counter) return;
             console.error("Failed to load thumbnail:", err);
             thumb_error.textContent = 'Failed to load this image';
             thumb_error.style.display = 'block';
