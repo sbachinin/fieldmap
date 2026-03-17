@@ -119,7 +119,7 @@ export async function get_image_url(lat, lon) {
     const folder_path = `photos/${coords_to_folder_name(lat, lon)}`;
 
     try {
-        const files = await github_request(`contents/${folder_path}`);
+        const files = await github_request(`contents/${folder_path}?t=${Date.now()}`);
         if (files && files.length > 0) {
             // Ideally, there should only be one image per folder. However, during the
             // "Delete-and-Create" replacement process, there may be a brief moment 
