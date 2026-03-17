@@ -25,7 +25,14 @@ function clamp_position(x, y, el, padding = 10) {
 function position_menu_at_cursor(x, y) {
     if (!menu_el) return;
 
-    const clamped = clamp_position(x, y, menu_el);
+    // Get the width of the menu now that it's visible so we can center it.
+    const menu_width = menu_el.offsetWidth;
+
+    // Center horizontally (-width / 2) and push below (+15px).
+    const offsetX = -(menu_width / 2);
+    const offsetY = 15;
+
+    const clamped = clamp_position(x + offsetX, y + offsetY, menu_el);
 
     menu_el.style.top = `${clamped.y}px`;
     menu_el.style.left = `${clamped.x}px`;

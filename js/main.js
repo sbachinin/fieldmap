@@ -66,7 +66,7 @@ async function bootstrap() {
     });
 
     // Auto-close menu when map is dragged/panned
-    events.on('map_drag', () => {
+    events.on('map_drag_or_zoom', () => {
         if (is_context_menu_visible()) {
             hide_context_menu();
         }

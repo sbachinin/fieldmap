@@ -76,9 +76,12 @@ export async function create_map(maptiler_key) {
         });
     });
 
-    // Hide context menu when map starts moving/panning
     mapInstance.on('dragstart', () => {
-        events.emit('map_drag', {});
+        events.emit('map_drag_or_zoom', {});
+    });
+
+    mapInstance.on('zoomstart', () => {
+        events.emit('map_drag_or_zoom', {});
     });
 
     // Save map location on moveend for persistence
