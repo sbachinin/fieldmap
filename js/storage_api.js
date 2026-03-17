@@ -28,3 +28,10 @@ export async function upload_image(path, blob) {
 export async function replace_image(lat, lon, blob) {
     return await github_storage.replace_image(lat, lon, blob);
 }
+
+/**
+ * Retrieves the image URL for the specified coordinates.
+ */
+export async function get_image_url(lat, lon) {
+    return await github_storage.get_image_url(lat, lon);
+}

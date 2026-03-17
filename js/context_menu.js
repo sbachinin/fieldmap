@@ -6,6 +6,7 @@
 
 import * as events from './events.js';
 import { coords_to_folder_name } from './utils.js';
+import { update_thumbnail } from './context_menu_thumbnail.js';
 
 const menu_el = document.getElementById('context_menu');
 const options_el = document.getElementById('context_menu_options');
@@ -80,13 +81,16 @@ export function show_context_menu(subject, x, y) {
 
     const { lat, lon } = subject;
 
-    // Add header with coordinates
-    const header = document.createElement('li');
-    header.className = 'menu-header';
-    header.textContent = coords_to_folder_name(lat, lon);
-    options_el.appendChild(header);
+    // Set header with coordinates
+    const header_el = document.getElementById('menu_header');
+    if (header_el) {
+        header_el.textContent = coords_to_folder_name(lat, lon);
+    }
 
     const is_replacing = subject.click_target === 'photo_marker';
+
+    // Update thumbnail in the menu
+    update_thumbnail(lat, lon, is_replacing);
 
     if (is_mobile()) {
         add_menu_item({
@@ -108,6 +112,7 @@ export function show_context_menu(subject, x, y) {
 export function hide_context_menu() {
     if (menu_el) {
         menu_el.classList.remove('visible');
+        menu_el.classList.remove('existing-marker');
     }
 }
 

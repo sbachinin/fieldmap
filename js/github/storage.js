@@ -102,3 +102,26 @@ export async function replace_image(lat, lon, blob) {
     });
 }
 
+/**
+ * Retrieves the direct download URL for the first image found in the coordinate folder.
+ * @param {number} lat - Latitude
+ * @param {number} lon - Longitude
+ * @returns {Promise<string|null>} The download URL or null if no image exists.
+ */
+export async function get_image_url(lat, lon) {
+    const folderPath = `photos/${coords_to_folder_name(lat, lon)}`;
+
+    try {
+        const files = await github_request(`contents/${folderPath}`);
+        if (files && files.length > 0) {
+            // Return the download_url of the first file (which points to raw.githubusercontent.com)
+            return files[0].download_url;
+        }
+    } catch (err) {
+        // If 404, it just means no photo exists yet for these coords
+        if (!err.message.includes('404')) {
+            console.error("Failed to fetch image URL:", err.message);
+        }
+    }
+    return null;
+}
