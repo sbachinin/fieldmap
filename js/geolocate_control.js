@@ -9,15 +9,15 @@
  * become permanently disabled and unrecoverable for that session.
  * 
  * This module maintains an infinite "Health Monitor" loop that only runs when
- * the app is visible. If location is lost (e.g., GPS toggled off mid-session), 
- * it removes the stalled control and retries until location returns, 
- * then re-initializes a fresh control.
+ * the app is visible. If location is lost, it waits for it to return before 
+ * refreshing the control, avoiding crashes on some Android devices.
  */
 
 let retryTimeout = null;
 let geolocateControl = null;
 let currentMapInstance = null;
 let isListenerAdded = false;
+let isStalled = false; // Tracks if the last check failed
 
 export function setup_geolocate_control(mapInstance) {
     currentMapInstance = mapInstance;
@@ -54,6 +54,20 @@ export function setup_geolocate_control(mapInstance) {
                     retryTimeout = null;
                 }
 
+                // If we were previously stalled, we must replace the control to recover it.
+                // We do this here (on success) rather than on error to avoid 
+                // Android Chrome hardware-transition crashes.
+                if (isStalled && currentMapInstance && geolocateControl) {
+                    console.log('Location returned. Refreshing stalled geolocate control.');
+                    try {
+                        currentMapInstance.removeControl(geolocateControl);
+                    } catch (e) {
+                        console.warn('Failed to remove geolocate control:', e);
+                    }
+                    geolocateControl = null;
+                    isStalled = false;
+                }
+
                 // If the control doesn't exist yet, create it
                 if (currentMapInstance && !geolocateControl) {
                     console.log('Location acquired! Initializing MapLibre geolocate control.');
@@ -72,18 +86,12 @@ export function setup_geolocate_control(mapInstance) {
             },
             (err) => {
                 // FAILURE: Location lost or disabled
-                console.log(`Location health check failed (${err.message}).`);
-
-                // Remove the stalled control so we can start fresh once location returns
-                if (currentMapInstance && geolocateControl) {
-                    console.log('Removing stalled geolocate control.');
-                    try {
-                        currentMapInstance.removeControl(geolocateControl);
-                    } catch (e) {
-                        console.warn('Failed to remove geolocate control:', e);
-                    }
-                    geolocateControl = null;
-                }
+                console.log(`Location health check status: ${err.message}.`);
+                
+                // Mark as stalled but do NOT remove the control yet.
+                // Touching the MapLibre/WebGL context during a GPS hardware 
+                // transition is what causes freezes on some Android devices.
+                isStalled = true;
 
                 // Retry every 5s until location is back
                 if (retryTimeout) clearTimeout(retryTimeout);
