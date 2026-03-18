@@ -7,7 +7,6 @@
 
 import * as events from './events.js';
 import { show_warning, show_error } from './message_overlay.js';
-import { setup_geolocate_control } from './geolocate_control.js';
 
 let mapInstance = null;
 
@@ -46,9 +45,6 @@ export async function create_map(maptiler_key) {
                 show_error('Map error: ' + e.error.message);
             }
         });
-
-        // Wait for location before initializing the geolocate control
-        setup_geolocate_control(mapInstance);
     } catch (err) {
         console.error('Failed to initialize map:', err);
         show_error('Failed to initialize map. MapTiler API key might be wrong.');
