@@ -398,3 +398,14 @@ html {
 body.browser-blocked {
     overflow: hidden;
 }
+/* User Location Blue Dot */
+.user-location-dot {
+    width: 14px;
+    height: 14px;
+    background-color: #2563eb;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    pointer-events: none;
+}
+

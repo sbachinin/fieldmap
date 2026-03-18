@@ -11,6 +11,7 @@ import * as storage_api from './storage_api.js';
 import { init_image_acquisition } from './image_acquisition.js';
 import { handle_image_selection } from './image_processing.js';
 import { show_context_menu, hide_context_menu, is_context_menu_visible } from './context_menu.js';
+import { init_user_location } from './user_location.js';
 import * as map_module from './map.js';
 import * as events from './events.js';
 import { check_browser_and_block_if_needed } from './browser_check.js';
@@ -37,7 +38,8 @@ async function bootstrap() {
     const creds = await ensure_credentials();
 
     // 2. Initialize map and location
-    await create_map(creds.maptiler_key);
+    const map = await create_map(creds.maptiler_key);
+    init_user_location(map);
 
 
     // 3. Load existing markers from storage
