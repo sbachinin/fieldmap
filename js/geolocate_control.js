@@ -1,23 +1,22 @@
 /**
  * geolocate_control.js
  * 
- * Helper to initialize the MapLibre geolocate control only after 
- * a valid location has been confirmed.
+ * Helper to initialize the MapLibre geolocate control.
  * 
  * This solves a specific issue in Progressive Web Apps (PWAs): if location services
  * are disabled on a smartphone, MapLibre's default geolocation control may 
  * become permanently disabled and unrecoverable for that session.
  * 
  * This module maintains an infinite "Health Monitor" loop that only runs when
- * the app is visible. If location is lost, it waits for it to return before 
- * refreshing the control, avoiding crashes on some Android devices.
+ * the app is visible. It initializes the control UI immediately and then 
+ * proactively triggers it once a valid location is confirmed to ensure it 
+ * stays active and recovered.
  */
 
 let retryTimeout = null;
 let geolocateControl = null;
 let currentMapInstance = null;
 let isListenerAdded = false;
-let isStalled = false; // Tracks if the last check failed
 
 export function setup_geolocate_control(mapInstance) {
     currentMapInstance = mapInstance;
@@ -46,6 +45,21 @@ export function setup_geolocate_control(mapInstance) {
             return;
         }
 
+        // Initialize the control UI immediately so it exists before hardware location starts.
+        // This avoids performing heavy WebGL/DOM work inside the hardware success callback,
+        // which can cause freezes on some Android devices.
+        if (currentMapInstance && !geolocateControl) {
+            console.log('Initializing geolocate control UI.');
+            geolocateControl = new maplibregl.GeolocateControl({
+                positionOptions: { enableHighAccuracy: true },
+                trackUserLocation: true,
+                showUserLocation: true,
+                showAccuracyCircle: false,
+                fitBoundsOptions: { maxZoom: 18 }
+            });
+            currentMapInstance.addControl(geolocateControl, 'top-right');
+        }
+
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 // SUCCESS: Location is available
@@ -54,31 +68,12 @@ export function setup_geolocate_control(mapInstance) {
                     retryTimeout = null;
                 }
 
-                // If we were previously stalled, we must replace the control to recover it.
-                // We do this here (on success) rather than on error to avoid 
-                // Android Chrome hardware-transition crashes.
-                if (isStalled && currentMapInstance && geolocateControl) {
-                    console.log('Location returned. Refreshing stalled geolocate control.');
-                    try {
-                        currentMapInstance.removeControl(geolocateControl);
-                    } catch (e) {
-                        console.warn('Failed to remove geolocate control:', e);
-                    }
-                    geolocateControl = null;
-                    isStalled = false;
-                }
-
-                // If the control doesn't exist yet, create it
-                if (currentMapInstance && !geolocateControl) {
-                    console.log('Location acquired! Initializing MapLibre geolocate control.');
-                    geolocateControl = new maplibregl.GeolocateControl({
-                        positionOptions: { enableHighAccuracy: true },
-                        trackUserLocation: true,
-                        showUserLocation: true,
-                        showAccuracyCircle: false,
-                        fitBoundsOptions: { maxZoom: 18 }
-                    });
-                    currentMapInstance.addControl(geolocateControl, 'top-right');
+                // Proactively trigger the control to ensure it recovers from any internal stalls
+                console.log('Location confirmed. Proactively triggering geolocate control.');
+                try {
+                    geolocateControl.trigger();
+                } catch (e) {
+                    console.warn('Failed to trigger geolocate control:', e);
                 }
 
                 // Monitor health every 15 seconds while successful and visible
@@ -88,11 +83,6 @@ export function setup_geolocate_control(mapInstance) {
                 // FAILURE: Location lost or disabled
                 console.log(`Location health check status: ${err.message}.`);
                 
-                // Mark as stalled but do NOT remove the control yet.
-                // Touching the MapLibre/WebGL context during a GPS hardware 
-                // transition is what causes freezes on some Android devices.
-                isStalled = true;
-
                 // Retry every 5s until location is back
                 if (retryTimeout) clearTimeout(retryTimeout);
                 retryTimeout = setTimeout(tryInit, 5000);
