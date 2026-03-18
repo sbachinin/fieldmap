@@ -71,7 +71,7 @@ export async function replace_image(lat, lon, blob) {
     // 1. Fetch current files to identify what needs to be deleted later
     let old_files;
     try {
-        old_files = await github_request(`contents/${folder_path}`);
+        old_files = await github_request(`contents/${folder_path}?t=${Date.now()}`);
     } catch (err) {
         throw new Error(`Cannot replace photo: The coordinate folder '${folder_path}' could not be retrieved. ${err.message}`);
     }
@@ -107,6 +107,56 @@ export async function replace_image(lat, lon, blob) {
     }
 
     return result;
+}
+
+/**
+ * Deletes all files within a coordinate folder, effectively removing the marker.
+ * Uses Promise.allSettled to track each deletion and reports partial failures.
+ * @param {number} lat - Latitude
+ * @param {number} lon - Longitude
+ * @throws {Error} If some or all deletions fail.
+ */
+export async function delete_marker(lat, lon) {
+    const folder_path = `photos/${coords_to_folder_name(lat, lon)}`;
+
+    // 1. Fetch current files in the folder
+    let files;
+    try {
+        files = await github_request(`contents/${folder_path}?t=${Date.now()}`);
+    } catch (err) {
+        // If 404, it means the marker is already effectively deleted
+        if (err.message && err.message.includes('404')) return;
+        throw err;
+    }
+
+    if (!files || !Array.isArray(files)) return;
+
+    // 2. Delete each file in parallel
+    const results = await Promise.allSettled(files.map(file => {
+        const body = {
+            message: `delete photo marker at ${lat}, ${lon} via FieldMap`,
+            sha: file.sha
+        };
+        return github_request(`contents/${file.path}`, {
+            method: 'DELETE',
+            body: JSON.stringify(body)
+        });
+    }));
+
+    // 3. Evaluate results
+    const failed = results.filter(r => r.status === 'rejected');
+    
+    if (failed.length > 0) {
+        if (failed.length === files.length) {
+            // All deletions failed
+            throw new Error(`Failed to delete marker: ${failed[0].reason.message}`);
+        } else {
+            // Partial failure
+            const error = new Error("Deletion partially failed: some files were removed, but others could not be deleted.");
+            error.name = "PartialDeletionError";
+            throw error;
+        }
+    }
 }
 
 /**

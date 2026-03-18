@@ -9,6 +9,7 @@ import * as events from './events.js';
 import { show_warning, show_error } from './message_overlay.js';
 
 let mapInstance = null;
+const markers = []; // Track all active markers for easy removal
 
 export async function create_map(maptiler_key) {
     let center = [0, 0];
@@ -123,9 +124,19 @@ export function add_marker(lat, lon) {
         });
     });
 
-    new maplibregl.Marker({ element: el })
+    const marker = new maplibregl.Marker({ element: el })
         .setLngLat([lon, lat])
         .addTo(mapInstance);
+
+    markers.push(marker);
+}
+
+/**
+ * Removes all photo markers from the map.
+ */
+export function clear_markers() {
+    markers.forEach(marker => marker.remove());
+    markers.length = 0; // Clear the array
 }
 
 /**

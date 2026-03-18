@@ -8,50 +8,56 @@ import * as storage from './storage_api.js';
 
 let image_request_counter = 0;
 
+// Cache static UI elements
+const thumb_img = document.getElementById('menu_thumbnail');
+const thumb_link = document.getElementById('menu_thumbnail_link');
+const thumb_error = document.getElementById('menu_thumbnail_error');
+const menu_el = document.getElementById('context_menu');
+
 /**
- * Updates the context menu thumbnail based on the current location and action type.
+ * Loads the thumbnail for an existing marker.
  * @param {number} lat - Latitude
  * @param {number} lon - Longitude
- * @param {boolean} is_replacing - Whether we are interacting with an existing marker
  */
-export function update_thumbnail(lat, lon, is_replacing) {
-    const thumb_img = document.getElementById('menu_thumbnail');
-    const thumb_link = document.getElementById('menu_thumbnail_link');
-    const thumb_error = document.getElementById('menu_thumbnail_error');
-    const menu_el = document.getElementById('context_menu');
-
-    if (!thumb_img || !thumb_error || !menu_el || !thumb_link) return;
-
+export function load_thumbnail(lat, lon) {
     const request_id = ++image_request_counter;
 
-    // Reset state
-    thumb_img.src = '';
-    thumb_link.href = '#';
+    // Reset UI to indicate we are loading an existing marker
+    menu_el.classList.add('existing-marker');
+    thumb_img.removeAttribute('src');
+    thumb_link.removeAttribute('href');
+    thumb_error.style.display = 'none';
+
+    // Fetch and display the thumbnail
+    storage.get_image_url(lat, lon).then((url) => {
+        if (request_id !== image_request_counter) return;
+
+        if (url) {
+            // Add cache-buster to ensure we get the latest image
+            const final_url = `${url}?t=${Date.now()}`;
+            thumb_img.src = final_url;
+            thumb_link.href = final_url;
+        } else {
+            thumb_error.textContent = 'No photo available';
+            thumb_error.style.display = 'block';
+        }
+    }).catch(err => {
+        if (request_id !== image_request_counter) return;
+        console.error("Failed to load thumbnail:", err);
+        thumb_error.textContent = 'Failed to load this image';
+        thumb_error.style.display = 'block';
+    });
+}
+
+/**
+ * Resets the thumbnail UI to a clean state.
+ */
+export function clear_thumbnail() {
+    image_request_counter++; // Invalidate any pending requests
+
+    thumb_img.removeAttribute('src');
+    thumb_link.removeAttribute('href');
     thumb_error.style.display = 'none';
     thumb_error.textContent = '';
     menu_el.classList.remove('existing-marker');
-
-    if (is_replacing) {
-        menu_el.classList.add('existing-marker');
-        // Fetch and display the thumbnail
-        storage.get_image_url(lat, lon).then((url) => {
-            if (request_id !== image_request_counter) return;
-
-            if (url) {
-                // Add cache-buster to ensure we get the latest image
-                const cacheBuster = `?t=${Date.now()}`;
-                const finalUrl = `${url}${cacheBuster}`;
-                thumb_img.src = finalUrl;
-                thumb_link.href = finalUrl;
-            } else {
-                thumb_error.textContent = 'No photo available';
-                thumb_error.style.display = 'block';
-            }
-        }).catch(err => {
-            if (request_id !== image_request_counter) return;
-            console.error("Failed to load thumbnail:", err);
-            thumb_error.textContent = 'Failed to load this image';
-            thumb_error.style.display = 'block';
-        });
-    }
 }

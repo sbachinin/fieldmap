@@ -15,6 +15,23 @@ import { init_user_location } from './user_location.js';
 import * as map_module from './map.js';
 import * as events from './events.js';
 import { check_browser_and_block_if_needed } from './browser_check.js';
+import { show_warning } from './message_overlay.js';
+import { handle_delete_marker } from './marker_actions.js';
+
+/**
+ * Re-fetches all markers from storage and re-renders them on the map.
+ * Ensures the UI is a perfect reflection of the remote repository.
+ */
+async function sync_map_markers() {
+    try {
+        const locations = await storage_api.load_markers();
+        map_module.clear_markers();
+        map_module.add_markers(locations);
+    } catch (err) {
+        console.error("Failed to sync markers:", err);
+        show_warning("Failed to refresh markers from server.");
+    }
+}
 
 async function bootstrap() {
     // 0. Block execution if Firefox mobile is detected
@@ -43,8 +60,7 @@ async function bootstrap() {
 
 
     // 3. Load existing markers from storage
-    const locations = await storage_api.load_markers();
-    map_module.add_markers(locations);
+    await sync_map_markers();
 
     // 4. Initialize Sub-modules
     init_image_acquisition();
@@ -78,14 +94,22 @@ async function bootstrap() {
     events.on('image_selected', handle_image_selection);
 
     // After upload is complete, update map markers
-    events.on('upload_complete', (payload) => {
-        const { lat, lon, is_replacing } = payload;
+    events.on('upload_complete', async () => {
+        await sync_map_markers();
+    });
 
-        // Add new marker to map if it wasn't a replacement
-        if (!is_replacing) {
-            map_module.add_marker(lat, lon);
+    // Re-sync markers when signaled by other actions (like delete)
+    events.on('markers_changed', async () => {
+        await sync_map_markers();
+    });
+
+    // Handle action selections from context menu
+    events.on('action_selected', async (payload) => {
+        const { action } = payload;
+        
+        if (action.type === 'delete_marker') {
+            await handle_delete_marker(action.lat, action.lon);
         }
-
     });
 }
 

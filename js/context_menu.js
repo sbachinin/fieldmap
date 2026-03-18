@@ -6,67 +6,51 @@
 
 import * as events from './events.js';
 import { coords_to_folder_name } from './utils.js';
-import { update_thumbnail } from './context_menu_thumbnail.js';
+import { load_thumbnail, clear_thumbnail } from './context_menu_thumbnail.js';
 
 const menu_el = document.getElementById('context_menu');
 const options_el = document.getElementById('context_menu_options');
 
 function clamp_position(x, y, el, padding = 10) {
     const rect = el.getBoundingClientRect();
-    const maxX = window.innerWidth - rect.width - padding;
-    const maxY = window.innerHeight - rect.height - padding;
+    const max_x = window.innerWidth - rect.width - padding;
+    const max_y = window.innerHeight - rect.height - padding;
 
     return {
-        x: Math.max(padding, Math.min(x, maxX)),
-        y: Math.max(padding, Math.min(y, maxY))
+        x: Math.max(padding, Math.min(x, max_x)),
+        y: Math.max(padding, Math.min(y, max_y))
     };
 }
 
 function position_menu_at_cursor(x, y) {
     if (!menu_el) return;
 
-    // Get the width of the menu now that it's visible so we can center it.
     const menu_width = menu_el.offsetWidth;
+    const offset_x = -(menu_width / 2);
+    const offset_y = 15;
 
-    // Center horizontally (-width / 2) and push below (+15px).
-    const offsetX = -(menu_width / 2);
-    const offsetY = 15;
-
-    const clamped = clamp_position(x + offsetX, y + offsetY, menu_el);
+    const clamped = clamp_position(x + offset_x, y + offset_y, menu_el);
 
     menu_el.style.top = `${clamped.y}px`;
     menu_el.style.left = `${clamped.x}px`;
-
-    // Remove the static transform as we are now clamping the absolute position
     menu_el.style.transform = 'none';
 }
 
-// Create the click outside listener once and reuse it
 const click_outside_listener = (e) => {
-    // Only handle clicks when menu is visible
     if (!is_context_menu_visible()) return;
-
-    // If they clicked the menu itself, do nothing
     if (menu_el.contains(e.target)) return;
-
-    // If they clicked an existing marker, let the event propagate
-    // so map.js can catch it and emit a new 'marker_tap' event to replace this menu
     if (e.target.closest('.field-marker')) return;
 
-    // Otherwise, they clicked the empty map or some other UI element.
-    // Stop the click from bleeding through to the map canvas
-    // which would accidentally trigger a new map_tap event.
     e.stopPropagation();
     hide_context_menu();
 };
 
-// Register the click outside listener once and forever
 document.addEventListener('click', click_outside_listener, true);
 
-// Private helper to add a menu item
 function add_menu_item({ label, action }) {
     const li = document.createElement('li');
     li.textContent = label;
+    
     li.onclick = () => {
         events.emit('action_selected', { action });
         hide_context_menu();
@@ -78,48 +62,77 @@ function is_mobile() {
     return /android|iphone|ipad|ipod/i.test(navigator.userAgent);
 }
 
+/**
+ * Main entry point to display the context menu.
+ */
 export function show_context_menu(subject, x, y) {
     if (!menu_el || !options_el) return;
 
-    // Ensure we clean up any previous state before opening a new one
+    // Ensure we start from a clean state
     hide_context_menu();
-
     options_el.innerHTML = '';
 
     const { lat, lon } = subject;
+    const is_replacing = subject.click_target === 'photo_marker';
 
-    // Set header with coordinates
+    set_header(lat, lon);
+
+    if (is_replacing) {
+        build_edit_menu(lat, lon);
+    } else {
+        build_add_menu(lat, lon);
+    }
+
+    menu_el.classList.add('visible');
+    position_menu_at_cursor(x, y);
+}
+
+function set_header(lat, lon) {
     const header_el = document.getElementById('menu_header');
     if (header_el) {
         header_el.textContent = coords_to_folder_name(lat, lon);
     }
+}
 
-    const is_replacing = subject.click_target === 'photo_marker';
-
-    // Update thumbnail in the menu
-    update_thumbnail(lat, lon, is_replacing);
-
+function build_add_menu(lat, lon) {
     if (is_mobile()) {
         add_menu_item({
-            label: is_replacing ? 'Replace photo (via camera)' : 'Add photo marker (via camera)',
-            action: { type: 'upload_image', is_replacing, image_source: 'camera', lat, lon }
+            label: 'Add photo marker (via camera)',
+            action: { type: 'upload_image', is_replacing: false, image_source: 'camera', lat, lon }
         });
     }
 
     add_menu_item({
-        label: is_replacing ? 'Replace photo (via gallery)' : 'Add photo marker (via gallery)',
-        action: { type: 'upload_image', is_replacing, image_source: 'gallery', lat, lon }
+        label: 'Add photo marker (via gallery)',
+        action: { type: 'upload_image', is_replacing: false, image_source: 'gallery', lat, lon }
+    });
+}
+
+function build_edit_menu(lat, lon) {
+    load_thumbnail(lat, lon);
+
+    if (is_mobile()) {
+        add_menu_item({
+            label: 'Replace photo (via camera)',
+            action: { type: 'upload_image', is_replacing: true, image_source: 'camera', lat, lon }
+        });
+    }
+
+    add_menu_item({
+        label: 'Replace photo (via gallery)',
+        action: { type: 'upload_image', is_replacing: true, image_source: 'gallery', lat, lon }
     });
 
-    // Make menu visible first so we can measure it for positioning
-    menu_el.classList.add('visible');
-    position_menu_at_cursor(x, y);
+    add_menu_item({
+        label: 'Delete photo marker',
+        action: { type: 'delete_marker', lat, lon }
+    });
 }
 
 export function hide_context_menu() {
     if (menu_el) {
         menu_el.classList.remove('visible');
-        menu_el.classList.remove('existing-marker');
+        clear_thumbnail();
     }
 }
 

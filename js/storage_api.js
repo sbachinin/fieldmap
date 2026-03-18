@@ -30,6 +30,13 @@ export async function replace_image(lat, lon, blob) {
 }
 
 /**
+ * Deletes all files at the specified coordinates, effectively removing the marker.
+ */
+export async function delete_marker(lat, lon) {
+    return await github_storage.delete_marker(lat, lon);
+}
+
+/**
  * Retrieves the image URL for the specified coordinates.
  */
 export async function get_image_url(lat, lon) {
