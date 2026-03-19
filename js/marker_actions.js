@@ -19,11 +19,7 @@ export async function handle_delete_marker(lat, lon) {
         await storage_api.delete_marker(lat, lon);
         show_success("Marker deleted successfully.");
     } catch (err) {
-        if (err.name === 'PartialDeletionError') {
-            show_warning(err.message);
-        } else {
-            show_warning(`Failed to delete marker: ${err.message}`);
-        }
+        show_warning(`Failed to delete marker: ${err.message}`);
     } finally {
         // Notify the app that markers have changed and need re-syncing
         events.emit('markers_changed');

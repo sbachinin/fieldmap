@@ -110,11 +110,11 @@ export async function replace_image(lat, lon, blob) {
 }
 
 /**
- * Deletes all files within a coordinate folder, effectively removing the marker.
- * Uses Promise.allSettled to track each deletion and reports partial failures.
+ * Deletes the file within a coordinate folder, effectively removing the marker.
+ * Fails if the folder contains more than one image.
  * @param {number} lat - Latitude
  * @param {number} lon - Longitude
- * @throws {Error} If some or all deletions fail.
+ * @throws {Error} If deletion fails or multiple files exist.
  */
 export async function delete_marker(lat, lon) {
     const folder_path = `photos/${coords_to_folder_name(lat, lon)}`;
@@ -124,39 +124,28 @@ export async function delete_marker(lat, lon) {
     try {
         files = await github_request(`contents/${folder_path}?t=${Date.now()}`);
     } catch (err) {
-        // If 404, it means the marker is already effectively deleted
-        if (err.message && err.message.includes('404')) return;
+        // Git doesn't track empty folders, so an empty folder will result in a 404.
+        if (err.message && err.message.includes('404')) {
+            throw new Error(`Target folder '${folder_path}' does not exist (it may have already been deleted).`);
+        }
         throw err;
     }
 
-    if (!files || !Array.isArray(files)) return;
-
-    // 2. Delete each file in parallel
-    const results = await Promise.allSettled(files.map(file => {
-        const body = {
-            message: `delete photo marker at ${lat}, ${lon} via FieldMap`,
-            sha: file.sha
-        };
-        return github_request(`contents/${file.path}`, {
-            method: 'DELETE',
-            body: JSON.stringify(body)
-        });
-    }));
-
-    // 3. Evaluate results
-    const failed = results.filter(r => r.status === 'rejected');
-    
-    if (failed.length > 0) {
-        if (failed.length === files.length) {
-            // All deletions failed
-            throw new Error(`Failed to delete marker: ${failed[0].reason.message}`);
-        } else {
-            // Partial failure
-            const error = new Error("Deletion partially failed: some files were removed, but others could not be deleted.");
-            error.name = "PartialDeletionError";
-            throw error;
-        }
+    if (!Array.isArray(files) || files.length !== 1) {
+        throw new Error(`Target folder '${folder_path}' does not contain exactly one image. Refusing to delete.`);
     }
+
+    // 2. Delete the single file
+    const file = files[0];
+    const body = {
+        message: `delete photo marker at ${lat}, ${lon} via FieldMap`,
+        sha: file.sha
+    };
+
+    await github_request(`contents/${file.path}`, {
+        method: 'DELETE',
+        body: JSON.stringify(body)
+    });
 }
 
 /**
