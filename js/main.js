@@ -19,6 +19,22 @@ import { show_warning } from './message_overlay.js';
 import { handle_delete_marker } from './marker_actions.js';
 
 /**
+ * Initializes PWA-specific UI elements, such as a manual refresh button.
+ * Only shows the button if the app is running in "standalone" mode.
+ */
+function init_pwa_refresh_button() {
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const refreshBtn = document.getElementById('refresh_btn');
+    
+    if (isPWA && refreshBtn) {
+        refreshBtn.style.display = 'flex';
+        refreshBtn.addEventListener('click', () => {
+            location.reload();
+        });
+    }
+}
+
+/**
  * Re-fetches all markers from storage and re-renders them on the map.
  * Ensures the UI is a perfect reflection of the remote repository.
  */
@@ -58,6 +74,8 @@ async function bootstrap() {
     const map = await create_map(creds.maptiler_key);
     init_user_location(map);
 
+    // 2.1 Initialize PWA features
+    init_pwa_refresh_button();
 
     // 3. Load existing markers from storage
     await sync_map_markers();
