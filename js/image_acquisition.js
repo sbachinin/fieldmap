@@ -7,52 +7,63 @@
 import * as events from './events.js';
 
 export function init_image_acquisition() {
-    const camera_input = document.getElementById('camera_input');
-    const gallery_input = document.getElementById('gallery_input');
-    let current_action = null;
-    
-    // Core handler for file selection (shared by both inputs)
-    const handle_file_change = (e) => {
-        const file = e.target.files[0];
-        if (file && current_action) {
-            events.emit('image_selected', { 
-                file: file,
-                action: current_action
-            });
-            current_action = null;
-        }
-    };
+    const camera_input = document.getElementById('camera_input')
+    const gallery_input = document.getElementById('gallery_input')
 
-    // Register listeners on both inputs
-    camera_input.addEventListener('change', handle_file_change);
-    gallery_input.addEventListener('change', handle_file_change);
+    let current_action = null
 
-    /**
-     * When the user returns to the app (window.focus), if no file was selected,
-     * we clear the current_action after a small delay to ensure 'change' had time to fire.
-     */
+    // --- Low-level: open file picker ---
+    function open_picker(source) {
+        const input = source === 'camera' ? camera_input : gallery_input
+        input.value = '' // reset so same file can be selected again
+        input.click()
+    }
+
+    // --- Low-level: extract file from input event ---
+    function get_file_from_event(e) {
+        return e.target.files && e.target.files[0]
+    }
+
+    // --- Core: handle successful file selection ---
+    function handle_file_selected(file) {
+        if (!file || !current_action) return
+
+        events.emit('image_selected', {
+            file,
+            action: current_action
+        })
+
+        current_action = null
+    }
+
+    // --- Core: handle cancellation (no file selected) ---
+    function handle_possible_cancel() {
+        if (!current_action) return
+
+        console.log('File selection cancelled by user. Resetting action state.')
+        current_action = null
+    }
+
+    // --- Wire inputs ---
+    function on_input_change(e) {
+        const file = get_file_from_event(e)
+        handle_file_selected(file)
+    }
+
+    camera_input.addEventListener('change', on_input_change)
+    gallery_input.addEventListener('change', on_input_change)
+
+    // --- Handle "user came back without selecting a file" ---
     window.addEventListener('focus', () => {
-        setTimeout(() => {
-            if (current_action) {
-                console.log("File selection cancelled by user. Resetting action state.");
-                current_action = null;
-            }
-        }, 1000); // 1s is usually enough for the 'change' event to propagate first
-    });
+        // Delay to allow 'change' event to fire first if it will
+        setTimeout(handle_possible_cancel, 1000)
+    })
 
-    // Watch for action selection events
+    // --- React to higher-level action ---
     events.on('action_selected', ({ action }) => {
-        // action object: { type: 'upload_image', is_replacing: bool, image_source: 'camera'|'gallery', lat, lon }
-        if (action.type === 'upload_image') {
-            current_action = action;
-            
-            if (action.image_source === 'camera') {
-                camera_input.value = ''; // Reset
-                camera_input.click();
-            } else if (action.image_source === 'gallery') {
-                gallery_input.value = ''; // Reset
-                gallery_input.click();
-            }
-        }
-    });
+        if (action.type !== 'upload_image') return
+
+        current_action = action
+        open_picker(action.image_source)
+    })
 }
