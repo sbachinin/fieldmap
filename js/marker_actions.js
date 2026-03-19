@@ -43,7 +43,7 @@ export async function handle_upload_processed_image(blob, action) {
         }
 
         show_success("Upload successful!");
-        events.emit('upload_complete', { lat, lon, is_replacing });
+        events.emit('markers_changed');
     } catch (error) {
         show_error(`Failed to save marker: ${error.message}`);
         throw error; // Re-throw so the caller knows it failed

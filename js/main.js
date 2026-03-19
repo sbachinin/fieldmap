@@ -93,12 +93,7 @@ async function bootstrap() {
     // Handle image selection (processing + upload)
     events.on('image_selected', handle_image_selection);
 
-    // After upload is complete, update map markers
-    events.on('upload_complete', async () => {
-        await sync_map_markers();
-    });
-
-    // Re-sync markers when signaled by other actions (like delete)
+    // Re-sync markers when signaled by any actions (upload, replace, delete)
     events.on('markers_changed', async () => {
         await sync_map_markers();
     });
