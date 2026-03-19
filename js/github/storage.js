@@ -13,7 +13,7 @@ import { coords_to_folder_name, get_unique_locations_from_tree, generate_storage
  */
 export async function load_markers() {
     try {
-        const data = await github_request('git/trees/main?recursive=1');
+        const data = await github_request('git/trees/main?recursive=1&t=' + Date.now());
         if (!data || !data.tree) return [];
         
         return get_unique_locations_from_tree(data.tree);
