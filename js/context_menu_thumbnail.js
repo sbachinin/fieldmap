@@ -21,11 +21,6 @@ const thumb_error = document.getElementById('menu_thumbnail_error');
 export function load_thumbnail(lat, lon) {
     const request_id = ++image_request_counter;
 
-    // Reset UI to indicate we are loading an existing marker
-    thumb_img.removeAttribute('src');
-    thumb_link.removeAttribute('href');
-    thumb_error.style.display = 'none';
-
     // Fetch and display the thumbnail
     storage.get_image_url(lat, lon).then((url) => {
         if (request_id !== image_request_counter) return;
