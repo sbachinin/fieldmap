@@ -5,7 +5,7 @@
  */
 
 import { github_request } from './client.js';
-import { coords_to_folder_name, get_unique_locations_from_tree, generate_storage_path } from '../utils.js';
+import { coords_to_folder_name, get_unique_locations_from_tree, generate_storage_path, add_cache_buster } from '../utils.js';
 
 /**
  * Fetches all existing coordinate folders using the Git Trees API.
@@ -13,7 +13,7 @@ import { coords_to_folder_name, get_unique_locations_from_tree, generate_storage
  */
 export async function load_markers() {
     try {
-        const data = await github_request('git/trees/main?recursive=1&t=' + Date.now());
+        const data = await github_request(add_cache_buster('git/trees/main?recursive=1'));
         if (!data || !data.tree) return [];
         
         return get_unique_locations_from_tree(data.tree);
@@ -71,7 +71,7 @@ export async function replace_image(lat, lon, blob) {
     // 1. Fetch current files to identify what needs to be deleted later
     let old_files;
     try {
-        old_files = await github_request(`contents/${folder_path}?t=${Date.now()}`);
+        old_files = await github_request(add_cache_buster(`contents/${folder_path}`));
     } catch (err) {
         throw new Error(`Cannot replace photo: The coordinate folder '${folder_path}' could not be retrieved. ${err.message}`);
     }
@@ -122,7 +122,7 @@ export async function delete_marker(lat, lon) {
     // 1. Fetch current files in the folder
     let files;
     try {
-        files = await github_request(`contents/${folder_path}?t=${Date.now()}`);
+        files = await github_request(add_cache_buster(`contents/${folder_path}`));
     } catch (err) {
         // Git doesn't track empty folders, so an empty folder will result in a 404.
         if (err.message && err.message.includes('404')) {
@@ -158,7 +158,7 @@ export async function get_image_url(lat, lon) {
     const folder_path = `photos/${coords_to_folder_name(lat, lon)}`;
 
     try {
-        const files = await github_request(`contents/${folder_path}?t=${Date.now()}`);
+        const files = await github_request(add_cache_buster(`contents/${folder_path}`));
         if (files && files.length > 0) {
             // Ideally, there should only be one image per folder. However, during the
             // "Delete-and-Create" replacement process, there may be a brief moment 

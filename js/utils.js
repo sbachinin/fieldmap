@@ -85,3 +85,16 @@ export function get_unique_locations_from_tree(tree) {
 
     return result;
 }
+
+/**
+ * Appends a cache-busting timestamp to a URL.
+ * 
+ * @param {string} url - The URL to append the cache buster to.
+ * @returns {string} The URL with the cache buster.
+ */
+export function add_cache_buster(url) {
+    if (!url) return url;
+    const timestamp = Date.now();
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}t=${timestamp}`;
+}

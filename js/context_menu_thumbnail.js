@@ -5,6 +5,7 @@
  */
 
 import * as storage from './storage_api.js';
+import { add_cache_buster } from './utils.js';
 
 let image_request_counter = 0;
 
@@ -27,7 +28,7 @@ export function load_thumbnail(lat, lon) {
 
         if (url) {
             // Add cache-buster to ensure we get the latest image
-            const final_url = `${url}?t=${Date.now()}`;
+            const final_url = add_cache_buster(url);
             thumb_img.src = final_url;
             thumb_link.href = final_url;
         } else {
