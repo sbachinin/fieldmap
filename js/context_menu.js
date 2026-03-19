@@ -116,6 +116,7 @@ export function show_context_menu(subject, x, y) {
     set_header(lat, lon);
 
     if (click_target === 'photo_marker') {
+        menu_el.classList.add('existing-marker');
         load_thumbnail(lat, lon);
     }
 
@@ -136,6 +137,7 @@ function set_header(lat, lon) {
 export function hide_context_menu() {
     if (menu_el) {
         menu_el.classList.remove('visible');
+        menu_el.classList.remove('existing-marker');
         clear_thumbnail();
     }
 }

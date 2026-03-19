@@ -12,7 +12,6 @@ let image_request_counter = 0;
 const thumb_img = document.getElementById('menu_thumbnail');
 const thumb_link = document.getElementById('menu_thumbnail_link');
 const thumb_error = document.getElementById('menu_thumbnail_error');
-const menu_el = document.getElementById('context_menu');
 
 /**
  * Loads the thumbnail for an existing marker.
@@ -23,7 +22,6 @@ export function load_thumbnail(lat, lon) {
     const request_id = ++image_request_counter;
 
     // Reset UI to indicate we are loading an existing marker
-    menu_el.classList.add('existing-marker');
     thumb_img.removeAttribute('src');
     thumb_link.removeAttribute('href');
     thumb_error.style.display = 'none';
@@ -59,5 +57,4 @@ export function clear_thumbnail() {
     thumb_link.removeAttribute('href');
     thumb_error.style.display = 'none';
     thumb_error.textContent = '';
-    menu_el.classList.remove('existing-marker');
 }
