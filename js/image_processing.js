@@ -7,8 +7,7 @@
 
 import { show_loading, show_error, show_success } from './message_overlay.js';
 import * as events from './events.js';
-import * as storage_api from './storage_api.js';
-import { generate_storage_path } from './utils.js';
+import { handle_upload_processed_image } from './marker_actions.js';
 
 const MAX_WIDTH = 1200; // Resize target max width
 const TARGET_QUALITY = 0.7; // Initial JPEG quality to ensure < 100KB constraint
@@ -20,30 +19,11 @@ export async function handle_image_selection(payload) {
         show_loading("Processing image...");
         const blob = await process_image(file);
         
-        await upload_processed_image(blob, action);
+        await handle_upload_processed_image(blob, action);
     } catch (error) {
         console.error("Image flow failed", error);
         show_error(error.message || "Operation failed. Please try again.");
     }
-}
-
-/**
- * Handles the upload and subsequent success UI of a processed image blob.
- */
-async function upload_processed_image(blob, action) {
-    const { lat, lon, is_replacing } = action;
-
-    show_loading(is_replacing ? "Replacing photo..." : "Uploading photo...");
-            
-    if (is_replacing) {
-        await storage_api.replace_image(lat, lon, blob);
-    } else {
-        const path = generate_storage_path(lat, lon);
-        await storage_api.upload_image(path, blob);
-    }
-
-    show_success("Upload successful!");
-    events.emit('upload_complete', { lat, lon, is_replacing });
 }
 
 function process_image(file) {
