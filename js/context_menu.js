@@ -50,7 +50,7 @@ document.addEventListener('click', click_outside_listener, true);
 function add_menu_item({ label, action }) {
     const li = document.createElement('li');
     li.textContent = label;
-    
+
     li.onclick = () => {
         events.emit('action_selected', { action });
         hide_context_menu();
@@ -63,6 +63,45 @@ function is_mobile() {
 }
 
 /**
+ * Decides which options to show in the context menu based on the clicked subject.
+ */
+function get_context_menu_options(subject) {
+    const { lat, lon, click_target } = subject;
+    const mobile = is_mobile();
+    const options = [];
+
+    if (click_target === 'photo_marker') {
+        if (mobile) {
+            options.push({
+                label: 'Replace photo (via camera)',
+                action: { type: 'upload_image', is_replacing: true, image_source: 'camera', lat, lon }
+            });
+        }
+        options.push({
+            label: 'Replace photo (via gallery)',
+            action: { type: 'upload_image', is_replacing: true, image_source: 'gallery', lat, lon }
+        });
+        options.push({
+            label: 'Delete photo marker',
+            action: { type: 'delete_marker', lat, lon }
+        });
+    } else {
+        if (mobile) {
+            options.push({
+                label: 'Add photo marker (via camera)',
+                action: { type: 'upload_image', is_replacing: false, image_source: 'camera', lat, lon }
+            });
+        }
+        options.push({
+            label: 'Add photo marker (via gallery)',
+            action: { type: 'upload_image', is_replacing: false, image_source: 'gallery', lat, lon }
+        });
+    }
+
+    return options;
+}
+
+/**
  * Main entry point to display the context menu.
  */
 export function show_context_menu(subject, x, y) {
@@ -72,16 +111,16 @@ export function show_context_menu(subject, x, y) {
     hide_context_menu();
     options_el.innerHTML = '';
 
-    const { lat, lon } = subject;
-    const is_replacing = subject.click_target === 'photo_marker';
+    const { lat, lon, click_target } = subject;
 
     set_header(lat, lon);
 
-    if (is_replacing) {
-        build_edit_menu(lat, lon);
-    } else {
-        build_add_menu(lat, lon);
+    if (click_target === 'photo_marker') {
+        load_thumbnail(lat, lon);
     }
+
+    const options = get_context_menu_options(subject);
+    options.forEach(add_menu_item);
 
     menu_el.classList.add('visible');
     position_menu_at_cursor(x, y);
@@ -92,41 +131,6 @@ function set_header(lat, lon) {
     if (header_el) {
         header_el.textContent = coords_to_folder_name(lat, lon);
     }
-}
-
-function build_add_menu(lat, lon) {
-    if (is_mobile()) {
-        add_menu_item({
-            label: 'Add photo marker (via camera)',
-            action: { type: 'upload_image', is_replacing: false, image_source: 'camera', lat, lon }
-        });
-    }
-
-    add_menu_item({
-        label: 'Add photo marker (via gallery)',
-        action: { type: 'upload_image', is_replacing: false, image_source: 'gallery', lat, lon }
-    });
-}
-
-function build_edit_menu(lat, lon) {
-    load_thumbnail(lat, lon);
-
-    if (is_mobile()) {
-        add_menu_item({
-            label: 'Replace photo (via camera)',
-            action: { type: 'upload_image', is_replacing: true, image_source: 'camera', lat, lon }
-        });
-    }
-
-    add_menu_item({
-        label: 'Replace photo (via gallery)',
-        action: { type: 'upload_image', is_replacing: true, image_source: 'gallery', lat, lon }
-    });
-
-    add_menu_item({
-        label: 'Delete photo marker',
-        action: { type: 'delete_marker', lat, lon }
-    });
 }
 
 export function hide_context_menu() {
