@@ -224,3 +224,10 @@ function add_vector_overlays() {
         console.error('Failed to inject vector overlay layers:', e);
     }
 }
+
+/**
+ * Returns the MapLibre map instance.
+ */
+export function get_map() {
+    return mapInstance;
+}

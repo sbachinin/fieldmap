@@ -8,6 +8,7 @@ import * as events from './events.js';
 import { coords_to_folder_name } from './utils.js';
 import { load_thumbnail, clear_thumbnail } from './context_menu_thumbnail.js';
 import { get_stashed_file } from './share_stash.js';
+import { add_temporary_marker, remove_temporary_marker } from './temporary_marker.js';
 
 const menu_el = document.getElementById('context_menu');
 const options_el = document.getElementById('context_menu_options');
@@ -132,6 +133,8 @@ export function show_context_menu(subject, x, y) {
     if (click_target === 'photo_marker') {
         menu_el.classList.add('existing-marker');
         load_thumbnail(lat, lon);
+    } else {
+        add_temporary_marker(lat, lon);
     }
 
     const options = get_context_menu_options(subject);
@@ -153,6 +156,7 @@ export function hide_context_menu() {
         menu_el.classList.remove('visible');
         menu_el.classList.remove('existing-marker');
         clear_thumbnail();
+        remove_temporary_marker();
     }
 }
 
