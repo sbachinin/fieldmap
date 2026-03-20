@@ -31,6 +31,32 @@ export async function init_share_stash() {
     await check_stash();
 }
 
+let db_promise = null;
+
+/**
+ * Helper to open the IndexedDB and ensure the object store exists.
+ * @returns {Promise<IDBDatabase>}
+ */
+function get_db() {
+    if (!db_promise) {
+        db_promise = new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME);
+                }
+            };
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    return db_promise;
+}
+
 /**
  * Checks IndexedDB for a stashed image and updates the UI.
  */
@@ -73,26 +99,16 @@ function hide_indicator() {
  * Retrieves the stashed image from IndexedDB.
  */
 async function get_from_indexeddb() {
+    const db = await get_db();
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 1);
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME);
-            }
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.get('stashed-image');
+
+        req.onsuccess = () => {
+            resolve(req.result);
         };
-        request.onsuccess = (event) => {
-            const db = event.target.result;
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const store = tx.objectStore(STORE_NAME);
-            const get_request = store.get('stashed-image');
-            get_request.onsuccess = () => {
-                db.close();
-                resolve(get_request.result);
-            };
-            get_request.onerror = () => reject(get_request.error);
-        };
-        request.onerror = () => reject(request.error);
+        req.onerror = () => reject(req.error);
     });
 }
 
@@ -104,20 +120,16 @@ export async function clear_stash() {
     hide_indicator();
 
     try {
+        const db = await get_db();
         await new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, 1);
-            request.onsuccess = (event) => {
-                const db = event.target.result;
-                const tx = db.transaction(STORE_NAME, 'readwrite');
-                const store = tx.objectStore(STORE_NAME);
-                store.delete('stashed-image');
-                tx.oncomplete = () => {
-                    db.close();
-                    resolve();
-                };
-                tx.onerror = () => reject(tx.error);
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            store.delete('stashed-image');
+
+            tx.oncomplete = () => {
+                resolve();
             };
-            request.onerror = () => reject(request.error);
+            tx.onerror = () => reject(tx.error);
         });
     } catch (err) {
         console.error('Failed to clear share stash from IndexedDB:', err);
