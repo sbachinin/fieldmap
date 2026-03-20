@@ -24,6 +24,8 @@ stash_close_btn.addEventListener('click', (e) => {
 
 /**
  * Initializes the share stash module.
+ * NOTE: on page load it's necessary to check stash,
+ * because the whole share flow works via redirect
  */
 export async function init_share_stash() {
     await check_stash();
@@ -100,7 +102,7 @@ async function get_from_indexeddb() {
 export async function clear_stash() {
     stashed_file = null;
     hide_indicator();
-    
+
     try {
         await new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, 1);
