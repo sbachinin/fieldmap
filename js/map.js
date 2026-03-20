@@ -172,35 +172,53 @@ function add_vector_overlays() {
             'type': 'line',
             'source': 'openmaptiles',
             'source-layer': 'building',
-            'paint': { 'line-color': '#ffffff', 'line-width': 2, 'line-opacity': 0.6 }
+            'paint': { 
+                'line-color': '#ffffff', 
+                'line-width': 3, 
+                'line-opacity': 0.8 
+            }
         });
         mapInstance.addLayer({
             'id': 'building-outline',
             'type': 'line',
             'source': 'openmaptiles',
             'source-layer': 'building',
-            'paint': { 'line-color': '#000000', 'line-width': 1, 'line-opacity': 0.65 }
+            'paint': { 
+                'line-color': '#000000', 
+                'line-width': 1.2, 
+                'line-opacity': 0.9 
+            }
         });
         mapInstance.addLayer({
             'id': 'building-fill',
             'type': 'fill',
             'source': 'openmaptiles',
             'source-layer': 'building',
-            'paint': { 'fill-color': 'rgba(0, 0, 0, 0.15)' }
+            'paint': { 
+                'fill-color': 'rgba(0, 0, 0, 0.2)' 
+            }
         });
         mapInstance.addLayer({
             'id': 'road-casing',
             'type': 'line',
             'source': 'openmaptiles',
             'source-layer': 'transportation',
-            'paint': { 'line-color': '#000000', 'line-width': 3, 'line-opacity': 0.4 }
+            'paint': { 
+                'line-color': '#000000', 
+                'line-width': 4, 
+                'line-opacity': 0.6 
+            }
         });
         mapInstance.addLayer({
             'id': 'road-inner',
             'type': 'line',
             'source': 'openmaptiles',
             'source-layer': 'transportation',
-            'paint': { 'line-color': '#ffffff', 'line-width': 1.5, 'line-opacity': 0.5 }
+            'paint': { 
+                'line-color': '#ffffff', 
+                'line-width': 2, 
+                'line-opacity': 0.7 
+            }
         });
     } catch (e) {
         console.error('Failed to inject vector overlay layers:', e);
