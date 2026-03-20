@@ -1,0 +1,11 @@
+Choice of APIs: MapTiler vs OpenFreeMap
+
+This project uses two different providers for map data: MapTiler for satellite imagery and OpenFreeMap for vector tiles. The split is intentional and based on the strengths and limitations of each service.
+
+MapTiler is used exclusively for satellite imagery, as OpenFreeMap does not provide this type of data. However, MapTiler’s vector tiles are not used. In practice, they include a significant number of additional features that do not closely reflect the original OpenStreetMap data. In some areas (for example, Kon Tum), this results in a map densely filled with buildings, even where OpenStreetMap itself contains little or no building data. These extra features appear to be generated or augmented beyond the original dataset.
+
+For this project, it is important to work with building data that closely matches OpenStreetMap. In many cases, buildings are added manually and selectively, with the intention of associating them with photos. Having only these specific buildings visible on the map makes it easy to identify which ones contain associated images. The presence of additional, non-OSM buildings would obscure this distinction and reduce the clarity of the interface.
+
+OpenFreeMap, by contrast, aims to stay much closer to the original OpenStreetMap data. This makes it a better fit for rendering vector features in this application, as it avoids introducing extraneous buildings and preserves the intended sparsity of the map.
+
+It is worth noting, however, that feature IDs in OpenFreeMap vector tiles do not reliably correspond to OpenStreetMap IDs. As a result, it is not possible to use these tiles to directly identify or reference OpenStreetMap features by ID.
