@@ -29,7 +29,7 @@ export async function create_map(maptiler_key) {
     try {
         mapInstance = new maplibregl.Map({
             container: 'map',
-            style: `https://api.maptiler.com/maps/satellite/style.json?key=${maptiler_key}`, // Base satellite
+            style: get_satellite_style(maptiler_key),
             center: center,
             zoom: zoom,
             attributionControl: false, // Completely disabled per requirements
@@ -53,6 +53,10 @@ export async function create_map(maptiler_key) {
     }
 
     mapInstance.on('load', () => {
+        mapInstance.addSource('openmaptiles', {
+            type: 'vector',
+            url: 'https://tiles.openfreemap.org/planet'
+        });
         add_vector_overlays();
     });
 
@@ -87,14 +91,26 @@ export async function create_map(maptiler_key) {
     return mapInstance;
 }
 
-export function reload_map_style(maptiler_key) {
-    if (!mapInstance) return;
-    
-    try {
-        mapInstance.setStyle(`https://api.maptiler.com/maps/satellite/style.json?key=${maptiler_key}`);
-    } catch (err) {
-        show_error('Failed to reload map style. Check your MapTiler API key.');
-    }
+/**
+ * Returns an inline MapLibre style with MapTiler satellite imagery.
+ */
+function get_satellite_style(maptiler_key) {
+    return {
+        version: 8,
+        sources: {
+            'satellite': {
+                type: 'raster',
+                tiles: [
+                    `https://api.maptiler.com/tiles/satellite-v2/{z}/{x}/{y}.jpg?key=${maptiler_key}`
+                ],
+                tileSize: 512,
+                maxzoom: 20
+            }
+        },
+        layers: [
+            { id: 'satellite-layer', type: 'raster', source: 'satellite' }
+        ]
+    };
 }
 
 export function add_marker(lat, lon) {
@@ -154,35 +170,35 @@ function add_vector_overlays() {
         mapInstance.addLayer({
             'id': 'building-halo',
             'type': 'line',
-            'source': 'maptiler_planet',
+            'source': 'openmaptiles',
             'source-layer': 'building',
             'paint': { 'line-color': '#ffffff', 'line-width': 2, 'line-opacity': 0.6 }
         });
         mapInstance.addLayer({
             'id': 'building-outline',
             'type': 'line',
-            'source': 'maptiler_planet',
+            'source': 'openmaptiles',
             'source-layer': 'building',
             'paint': { 'line-color': '#000000', 'line-width': 1, 'line-opacity': 0.65 }
         });
         mapInstance.addLayer({
             'id': 'building-fill',
             'type': 'fill',
-            'source': 'maptiler_planet',
+            'source': 'openmaptiles',
             'source-layer': 'building',
             'paint': { 'fill-color': 'rgba(0, 0, 0, 0.15)' }
         });
         mapInstance.addLayer({
             'id': 'road-casing',
             'type': 'line',
-            'source': 'maptiler_planet',
+            'source': 'openmaptiles',
             'source-layer': 'transportation',
             'paint': { 'line-color': '#000000', 'line-width': 3, 'line-opacity': 0.4 }
         });
         mapInstance.addLayer({
             'id': 'road-inner',
             'type': 'line',
-            'source': 'maptiler_planet',
+            'source': 'openmaptiles',
             'source-layer': 'transportation',
             'paint': { 'line-color': '#ffffff', 'line-width': 1.5, 'line-opacity': 0.5 }
         });
