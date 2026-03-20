@@ -79,9 +79,13 @@ async function check_stash() {
  * Displays the stash indicator with a thumbnail.
  */
 function show_indicator(file) {
-    const url = URL.createObjectURL(file);
-    stash_thumbnail.src = url;
-    stash_indicator.classList.remove('hidden');
+    if (stash_thumbnail.src) {
+        URL.revokeObjectURL(stash_thumbnail.src)
+    }
+
+    const url = URL.createObjectURL(file)
+    stash_thumbnail.src = url
+    stash_indicator.classList.remove('hidden')
 }
 
 /**
