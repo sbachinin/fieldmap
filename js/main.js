@@ -17,6 +17,7 @@ import * as events from './events.js';
 import { check_browser_and_block_if_needed } from './browser_check.js';
 import { show_warning } from './message_overlay.js';
 import { handle_delete_marker } from './marker_actions.js';
+import { init_share_stash, clear_stash } from './share_stash.js';
 
 /**
  * Initializes PWA-specific UI elements, such as a manual refresh button.
@@ -76,6 +77,7 @@ async function bootstrap() {
 
     // 2.1 Initialize PWA features
     init_pwa_refresh_button();
+    await init_share_stash();
 
     // 3. Load existing markers from storage
     await sync_map_markers();
@@ -114,6 +116,7 @@ async function bootstrap() {
     // Re-sync markers when signaled by any actions (upload, replace, delete)
     events.on('markers_changed', async () => {
         await sync_map_markers();
+        await clear_stash();
     });
 
     // Handle action selections from context menu

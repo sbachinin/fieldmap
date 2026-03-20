@@ -7,6 +7,7 @@
 import * as events from './events.js';
 import { coords_to_folder_name } from './utils.js';
 import { load_thumbnail, clear_thumbnail } from './context_menu_thumbnail.js';
+import { get_stashed_file } from './share_stash.js';
 
 const menu_el = document.getElementById('context_menu');
 const options_el = document.getElementById('context_menu_options');
@@ -68,9 +69,16 @@ function is_mobile() {
 function get_context_menu_options(subject) {
     const { lat, lon, click_target } = subject;
     const mobile = is_mobile();
+    const stashed_file = get_stashed_file();
     const options = [];
 
     if (click_target === 'photo_marker') {
+        if (stashed_file) {
+            options.push({
+                label: 'Replace with shared image',
+                action: { type: 'upload_image', is_replacing: true, image_source: 'stash', lat, lon }
+            });
+        }
         if (mobile) {
             options.push({
                 label: 'Replace photo (via camera)',
@@ -86,6 +94,12 @@ function get_context_menu_options(subject) {
             action: { type: 'delete_marker', lat, lon }
         });
     } else {
+        if (stashed_file) {
+            options.push({
+                label: 'Add shared image',
+                action: { type: 'upload_image', is_replacing: false, image_source: 'stash', lat, lon }
+            });
+        }
         if (mobile) {
             options.push({
                 label: 'Add photo marker (via camera)',

@@ -1,0 +1,55 @@
+/* Share Stash Indicator (Top Left) */
+.share-stash-indicator {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 10;
+    width: 64px;
+    height: 64px;
+    background: var(--bg-surface);
+    backdrop-filter: blur(var(--bg-blur));
+    -webkit-backdrop-filter: blur(var(--bg-blur));
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 4px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.share-stash-indicator.hidden {
+    display: none;
+}
+
+.stash-thumbnail {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.stash-close-btn {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 20px;
+    height: 20px;
+    background: var(--danger);
+    color: white;
+    border: 1px solid white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    padding: 0;
+}
+
+.stash-close-btn:hover {
+    background: #dc2626; /* Darker red */
+}

@@ -5,6 +5,7 @@
  */
 
 import * as events from './events.js';
+import { get_stashed_file } from './share_stash.js';
 
 export function init_image_acquisition() {
     const camera_input = document.getElementById('camera_input')
@@ -14,6 +15,17 @@ export function init_image_acquisition() {
 
     // --- Low-level: open file picker ---
     function open_picker(source) {
+        if (source === 'stash') {
+            const file = get_stashed_file();
+            if (file) {
+                events.emit('image_selected', {
+                    file,
+                    action: current_action
+                });
+                current_action = null;
+            }
+            return;
+        }
         const input = source === 'camera' ? camera_input : gallery_input
         input.value = '' // reset so same file can be selected again
         input.click()
