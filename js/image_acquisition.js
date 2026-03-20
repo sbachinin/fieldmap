@@ -13,19 +13,31 @@ export function init_image_acquisition() {
 
     let current_action = null
 
+    /**
+     * Consolidates the end of an acquisition flow.
+     * Emits the selection event if a file is provided, and always clears current_action.
+     * @param {File|Blob|null} file 
+     */
+    function finalize_acquisition(file) {
+        if (!current_action) return;
+
+        if (file) {
+            events.emit('image_selected', {
+                file,
+                action: current_action
+            });
+        }
+
+        current_action = null;
+    }
+
     // --- Low-level: open file picker ---
     function open_picker(source) {
         if (source === 'stash') {
-            const file = get_stashed_file();
-            if (file) {
-                events.emit('image_selected', {
-                    file,
-                    action: current_action
-                });
-                current_action = null;
-            }
+            finalize_acquisition(get_stashed_file());
             return;
         }
+
         const input = source === 'camera' ? camera_input : gallery_input
         input.value = '' // reset so same file can be selected again
         input.click()
@@ -38,22 +50,17 @@ export function init_image_acquisition() {
 
     // --- Core: handle successful file selection ---
     function handle_file_selected(file) {
-        if (!file || !current_action) return
-
-        events.emit('image_selected', {
-            file,
-            action: current_action
-        })
-
-        current_action = null
+        if (file) {
+            finalize_acquisition(file);
+        }
     }
 
     // --- Core: handle cancellation (no file selected) ---
     function handle_possible_cancel() {
-        if (!current_action) return
-
-        console.log('File selection cancelled by user. Resetting action state.')
-        current_action = null
+        if (current_action) {
+            console.log('File selection cancelled by user. Resetting action state.');
+            finalize_acquisition(null);
+        }
     }
 
     // --- Wire inputs ---
