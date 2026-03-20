@@ -50,7 +50,8 @@ async function store_shared_file(file) {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
-    // Handle the share-target POST request
+    // Only intercept the share-target POST request.
+    // For all other requests, we do nothing and let the browser handle them naturally.
     if (event.request.method === 'POST' && url.searchParams.has('share-target')) {
         event.respondWith((async () => {
             try {
@@ -65,13 +66,8 @@ self.addEventListener('fetch', (event) => {
             }
 
             // Redirect to the main app URL after processing
-            // Using an absolute URL is more robust for Response.redirect
             const redirectUrl = new URL('./', url).href;
             return Response.redirect(redirectUrl, 303);
         })());
-        return;
     }
-
-    // Default fetch handler
-    event.respondWith(fetch(event.request));
 });
