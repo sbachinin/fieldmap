@@ -26,7 +26,7 @@ export function init_user_location(map) {
     if (geolocateBtn) {
         geolocateBtn.addEventListener('click', async () => {
             if (geolocateBtn.classList.contains('loading')) return;
-            
+
             geolocateBtn.classList.add('loading');
             const pos = await retrieve_position();
             geolocateBtn.classList.remove('loading');
@@ -38,8 +38,8 @@ export function init_user_location(map) {
 
                 mapInstance.easeTo({
                     center: [pos.lon, pos.lat],
-                    zoom: 18,
-                    essential: true
+                    zoom: 17.3,
+                    speed: 0.7,
                 });
             } else {
                 show_warning("Actual location cannot be retrieved at the moment.");
@@ -157,8 +157,8 @@ function updateMarker(lat, lon) {
             pitchAlignment: 'map',
             rotationAlignment: 'map'
         })
-        .setLngLat([lon, lat])
-        .addTo(mapInstance);
+            .setLngLat([lon, lat])
+            .addTo(mapInstance);
     } else {
         // Update existing marker position
         userMarker.setLngLat([lon, lat]);
