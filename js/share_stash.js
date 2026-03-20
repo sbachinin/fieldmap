@@ -22,15 +22,6 @@ stash_close_btn.addEventListener('click', (e) => {
     clear_stash();
 });
 
-/**
- * Initializes the share stash module.
- * NOTE: on page load it's necessary to check stash,
- * because the whole share flow works via redirect
- */
-export async function init_share_stash() {
-    await check_stash();
-}
-
 let db_promise = null;
 
 /**
@@ -59,8 +50,10 @@ function get_db() {
 
 /**
  * Checks IndexedDB for a stashed image and updates the UI.
+ * NOTE: on page load it's necessary to check stash,
+ * because the whole share flow works via redirect
  */
-async function check_stash() {
+export async function check_stash() {
     try {
         const file = await get_from_indexeddb();
         if (file) {
