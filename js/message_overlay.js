@@ -100,4 +100,5 @@ export {
     show_success,
     show_error,
     show_warning,
+    hide_message_overlay
 };

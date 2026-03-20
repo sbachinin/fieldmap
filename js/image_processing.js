@@ -28,7 +28,7 @@ export async function handle_image_selection(payload) {
     }
 }
 
-async function convert_heic_if_needed(file) {
+export async function convert_heic_if_needed(file) {
     const is_heic = file.name?.toLowerCase().endsWith('.heic') || 
                    file.name?.toLowerCase().endsWith('.heif') ||
                    file.type === 'image/heic' || 

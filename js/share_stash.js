@@ -6,6 +6,9 @@
  * showing the UI indicator, and providing the image to the context menu.
  */
 
+import { convert_heic_if_needed } from './image_processing.js';
+import { hide_message_overlay } from './message_overlay.js';
+
 const DB_NAME = 'fieldmap-share-db';
 const STORE_NAME = 'share-stash';
 
@@ -55,8 +58,10 @@ function get_db() {
  */
 export async function check_stash() {
     try {
-        const file = await get_from_indexeddb();
+        let file = await get_from_indexeddb();
         if (file) {
+            file = await convert_heic_if_needed(file);
+            hide_message_overlay();
             stashed_file = file;
             show_indicator(file);
         } else {
@@ -65,6 +70,7 @@ export async function check_stash() {
         }
     } catch (err) {
         console.error('Failed to check share stash:', err);
+        hide_message_overlay();
     }
 }
 
