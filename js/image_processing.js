@@ -13,9 +13,11 @@ const MAX_WIDTH = 1200; // Resize target max width
 const TARGET_QUALITY = 0.7; // Initial JPEG quality to ensure < 100KB constraint
 
 export async function handle_image_selection(payload) {
-    const { file, action } = payload;
+    let { file, action } = payload;
     
     try {
+        file = await convert_heic_if_needed(file);
+
         show_loading("Processing image...");
         const blob = await process_image(file);
         
@@ -24,6 +26,27 @@ export async function handle_image_selection(payload) {
         console.error("Image flow failed", error);
         show_error(error.message || "Operation failed. Please try again.");
     }
+}
+
+async function convert_heic_if_needed(file) {
+    const is_heic = file.name?.toLowerCase().endsWith('.heic') || 
+                   file.name?.toLowerCase().endsWith('.heif') ||
+                   file.type === 'image/heic' || 
+                   file.type === 'image/heif';
+
+    if (!is_heic) {
+        return file;
+    }
+
+    show_loading("Converting HEIC image...");
+    const converted = await heic2any({
+        blob: file,
+        toType: "image/jpeg",
+        quality: 0.8
+    });
+
+    // heic2any can return an array for multi-image files; take the first one
+    return Array.isArray(converted) ? converted[0] : converted;
 }
 
 function process_image(file) {
