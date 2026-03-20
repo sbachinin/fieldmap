@@ -18,22 +18,7 @@ import { check_browser_and_block_if_needed } from './browser_check.js';
 import { show_warning } from './message_overlay.js';
 import { handle_delete_marker } from './marker_actions.js';
 import { check_stash, clear_stash } from './share_stash.js';
-
-/**
- * Initializes PWA-specific UI elements, such as a manual refresh button.
- * Only shows the button if the app is running in "standalone" mode.
- */
-function init_pwa_refresh_button() {
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-    const refreshBtn = document.getElementById('refresh_btn');
-    
-    if (isPWA && refreshBtn) {
-        refreshBtn.style.display = 'flex';
-        refreshBtn.addEventListener('click', () => {
-            location.reload();
-        });
-    }
-}
+import { init_pwa_refresh_button } from './pwa_utils.js';
 
 /**
  * Re-fetches all markers from storage and re-renders them on the map.
