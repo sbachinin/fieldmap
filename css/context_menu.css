@@ -1,0 +1,138 @@
+/* Context Menu Styles */
+
+#context_menu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* Ensures it anchors exactly in the middle */
+    z-index: 20;
+    background: var(--bg-surface);
+    backdrop-filter: blur(var(--bg-blur));
+    -webkit-backdrop-filter: blur(var(--bg-blur));
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    padding: 4px 0; /* Reduced vertical padding */
+    width: max-content;
+    min-width: 120px;
+    display: none;
+}
+
+#context_menu.visible {
+    display: block;
+}
+
+#context_menu_options {
+    list-style: none;
+    padding: 4px 0;
+}
+
+.menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border-color);
+    background: transparent;
+    user-select: text;
+    -webkit-user-select: text;
+    margin-bottom: 4px;
+}
+
+#context_menu_options li {
+    padding: 10px 16px;
+    margin: 4px 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
+    border-radius: 8px;
+    background: #f1f5f9;
+    border: 2px solid #cbd5e1;
+    color: var(--text-primary);
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+#context_menu_options li:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+#context_menu_options li:active {
+    background: #cbd5e1;
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* Thumbnail in Context Menu */
+.menu-thumbnail-container {
+    padding: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    background: transparent;
+    width: 240px; /* Sensible default width */
+    height: 140px; /* Reduced default height */
+    overflow: hidden;
+    position: relative;
+}
+
+#context_menu.existing-marker .menu-thumbnail-container {
+    display: flex;
+}
+
+#menu_thumbnail_link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.menu-thumbnail {
+    width: 100%;
+    height: 100%;
+    display: none; /* Hidden until valid src is loaded */
+    object-fit: contain;
+}
+
+.menu-thumbnail[src]:not([src=""]) {
+    display: block;
+}
+
+.thumbnail-error {
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 20px;
+    text-align: center;
+    display: none;
+}
+
+/* Street View Button (Google Button) */
+.street-view-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background-color: #4285F4; /* Google Blue */
+    color: white !important;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+    font-family: 'Inter', sans-serif;
+    line-height: 0;
+    padding-bottom: 1px;
+}

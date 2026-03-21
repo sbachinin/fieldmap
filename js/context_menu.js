@@ -12,6 +12,8 @@ import { add_temporary_marker, remove_temporary_marker } from './temporary_marke
 
 const menu_el = document.getElementById('context_menu');
 const options_el = document.getElementById('context_menu_options');
+const coords_el = document.getElementById('menu_coords');
+const street_view_link_el = document.getElementById('street_view_link');
 
 function clamp_position(x, y, el, padding = 10) {
     const rect = el.getBoundingClientRect();
@@ -145,10 +147,8 @@ export function show_context_menu(subject, x, y) {
 }
 
 function set_header(lat, lon) {
-    const header_el = document.getElementById('menu_header');
-    if (header_el) {
-        header_el.textContent = coords_to_folder_name(lat, lon);
-    }
+    coords_el.textContent = coords_to_folder_name(lat, lon);
+    street_view_link_el.href = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lon}`;
 }
 
 export function hide_context_menu() {
