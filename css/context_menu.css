@@ -135,4 +135,6 @@
     font-family: 'Inter', sans-serif;
     line-height: 0;
     padding-bottom: 1px;
+    user-select: none;
+    -webkit-user-select: none;
 }

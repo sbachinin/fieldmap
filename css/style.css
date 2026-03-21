@@ -30,6 +30,14 @@ html {
     background-color: #f8fafc;
 }
 
+button, 
+.map-control-btn, 
+.close-credentials-btn, 
+.stash-close-btn {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 #map {
     position: absolute;
     top: 0;
