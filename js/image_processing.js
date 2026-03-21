@@ -29,24 +29,23 @@ export async function handle_image_selection(payload) {
 }
 
 export async function convert_heic_if_needed(file) {
-    const is_heic = file.name?.toLowerCase().endsWith('.heic') || 
-                   file.name?.toLowerCase().endsWith('.heif') ||
-                   file.type === 'image/heic' || 
-                   file.type === 'image/heif';
+    // Checking for HEIC and converting only if it "looks" like HEIC was too brittle and 
+    // didn't work when served from GitHub Pages for unknown reasons. 
+    // Therefore, ALL images are tried to be processed as HEIC, which will cause errors 
+    // for all other files, but this is not a big deal because it is very quick.
+    try {
+        const converted = await heic2any({
+            blob: file,
+            toType: "image/jpeg",
+            quality: 0.8
+        });
 
-    if (!is_heic) {
+        // heic2any can return an array for multi-image files; take the first one
+        return Array.isArray(converted) ? converted[0] : converted;
+    } catch (err) {
+        // Not a HEIC file, or conversion not needed — return original
         return file;
     }
-
-    show_loading("Converting HEIC image...");
-    const converted = await heic2any({
-        blob: file,
-        toType: "image/jpeg",
-        quality: 0.8
-    });
-
-    // heic2any can return an array for multi-image files; take the first one
-    return Array.isArray(converted) ? converted[0] : converted;
 }
 
 function process_image(file) {

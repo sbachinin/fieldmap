@@ -82,6 +82,11 @@ function show_indicator(file) {
         URL.revokeObjectURL(stash_thumbnail.src)
     }
 
+    stash_thumbnail.onerror = () => {
+        stash_thumbnail.onerror = null;
+        stash_thumbnail.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='80'>📷</text></svg>";
+    };
+
     const url = URL.createObjectURL(file)
     stash_thumbnail.src = url
     stash_indicator.classList.remove('hidden')
