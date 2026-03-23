@@ -65,8 +65,13 @@ function get_unique_locations_from_tree(tree) {
 /**
  * Fetches all existing coordinate folders from GitHub.
  * 
+ * NOTE: github_token is optional. If not provided, the request is made without authentication.
+ * Unauthenticated requests to the GitHub API are subject to much lower rate limits 
+ * (typically 60 requests per hour per IP) compared to authenticated requests.
+ * If these limits are frequently hit, providing a token will be necessary.
+ * 
  * @param {Object} params
- * @param {string} params.github_token - GitHub Personal Access Token
+ * @param {string} [params.github_token] - Optional GitHub Personal Access Token
  * @param {string} params.owner - GitHub repository owner
  * @param {string} params.repo - GitHub repository name
  * @param {string} [params.branch='main'] - GitHub branch name
@@ -77,9 +82,12 @@ export async function load_markers({ github_token, owner, repo, branch = 'main' 
     const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1&t=${timestamp}`;
 
     const headers = {
-        'Authorization': `Bearer ${github_token}`,
         'Accept': 'application/vnd.github.v3+json'
     };
+
+    if (github_token) {
+        headers['Authorization'] = `Bearer ${github_token}`;
+    }
 
     try {
         const response = await fetch(url, { headers });
