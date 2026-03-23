@@ -5,22 +5,19 @@
  */
 
 import { github_request } from './client.js';
-import { coords_to_folder_name, get_unique_locations_from_tree, generate_storage_path, add_cache_buster } from '../utils.js';
+import { coords_to_folder_name, generate_storage_path, add_cache_buster } from '../utils.js';
+import { load_markers as _load_markers } from '../marker_loader.js';
+import { get_credentials } from '../credentials.js';
+import { GITHUB_CONFIG } from '../constants.js';
 
 /**
  * Fetches all existing coordinate folders using the Git Trees API.
  * @returns {Promise<Array<{lat: number, lon: number}>>}
  */
 export async function load_markers() {
-    try {
-        const data = await github_request(add_cache_buster('git/trees/main?recursive=1'));
-        if (!data || !data.tree) return [];
-        
-        return get_unique_locations_from_tree(data.tree);
-    } catch (err) {
-        console.error("Failed to load markers from GitHub:", err.message);
-        return [];
-    }
+    const { github_token } = get_credentials();
+    const { OWNER: owner, REPO: repo } = GITHUB_CONFIG;
+    return _load_markers({ github_token, owner, repo, branch: 'main' });
 }
 
 /**
