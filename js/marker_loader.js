@@ -27,7 +27,7 @@ function parse_coords_from_path(path) {
         if (parts.length === 2) {
             const lat = parseFloat(parts[0]);
             const lon = parseFloat(parts[1]);
-            
+
             if (!isNaN(lat) && !isNaN(lon)) {
                 return { lat, lon };
             }
@@ -40,26 +40,39 @@ function parse_coords_from_path(path) {
  * Filter a GitHub git tree for coordinate-bearing folders and return unique locations.
  * 
  * @param {Array} tree - The GitHub git tree array.
- * @returns {Array<{lat: number, lon: number}>} Array of unique coordinate objects.
+ * @returns {Array<{lat: number, lon: number, filename: string | null}>} Array of unique coordinate objects with filenames.
  */
 function get_unique_locations_from_tree(tree) {
-    const uniqueLocations = new Set();
-    const result = [];
+    const locationsMap = new Map();
 
     tree.forEach(item => {
-        if (item.type === 'tree' && item.path.startsWith('photos/')) {
+        if (item.path.startsWith('photos/')) {
             const coords = parse_coords_from_path(item.path);
             if (coords) {
-                const coordKey = `${coords.lat}_${coords.lon}`;
-                if (!uniqueLocations.has(coordKey)) {
-                    uniqueLocations.add(coordKey);
-                    result.push(coords);
+                const coordKey = `${coords.lat.toFixed(6)}_${coords.lon.toFixed(6)}`
+
+                let filename = null;
+                if (item.type === 'blob') {
+                    const pathParts = item.path.split('/');
+                    if (pathParts.length > 2) {
+                        filename = pathParts[pathParts.length - 1];
+                    }
+                }
+
+                if (!locationsMap.has(coordKey)) {
+                    locationsMap.set(coordKey, {
+                        lat: coords.lat,
+                        lon: coords.lon,
+                        filename: filename
+                    });
+                } else if (filename && !locationsMap.get(coordKey).filename) {
+                    locationsMap.get(coordKey).filename = filename;
                 }
             }
         }
     });
 
-    return result;
+    return Array.from(locationsMap.values());
 }
 
 /**
